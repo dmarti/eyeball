@@ -36,6 +36,9 @@ def mirror_url(url, category):
         res = urlopen(req, timeout=60)
         encodings = (res.headers.get_content_charset(), 'utf-8', 'latin_1')
         stuff = res.read()
+        headers = ''
+        for h in res.headers:
+            headers = headers + "%s: %s\n" % (h, res.getheader(h))
         for encoding in encodings:
             try:
                 stuff = stuff.decode(encoding)
@@ -45,7 +48,7 @@ def mirror_url(url, category):
         else:       
             print("Failed to decode %s" % url)
             return False
-        spew_file(filename, stuff)
+        spew_file(filename, '\n'.join([headers, stuff]))
         logging.info("Mirrored: %s" % url)
         return True
     except HTTPError as err:
