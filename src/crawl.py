@@ -26,6 +26,11 @@ def mirror_url(url, category):
         logging.debug("Skipping unrequestable URL: %s" % url)
         return False
     filename = url_to_path(url, category)
+    
+    # FIXME handle stale files and multiple versions
+    if os.path.exists(filename):
+        logging.debug("%s exists" % filename)
+        return True
 
     try:
         res = urlopen(req, timeout=60)
