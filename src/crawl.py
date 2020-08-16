@@ -12,7 +12,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from utils import spew_file, url_to_path
+from utils import spew_file, url_to_path, touch_file
 
 def mirror_url(url, category):
     tmp = urlparse(url)
@@ -29,7 +29,7 @@ def mirror_url(url, category):
     
     # FIXME handle stale files and multiple versions
     if os.path.exists(filename):
-        logging.debug("%s exists" % filename)
+        logging.debug("%s already mirrored at %s" % (url, filename))
         return True
 
     try:
@@ -56,6 +56,7 @@ def mirror_url(url, category):
             logging.info("304 Not Modified: %s" % url)
             return True
         logging.warning("Failed %d fetching: %s" % (err.code, url))
+        touch_file(filename)
         return False
     except KeyboardInterrupt:
         raise
