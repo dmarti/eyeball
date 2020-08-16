@@ -23,3 +23,18 @@ class EyeballTestCase(unittest.TestCase):
         from datetime import datetime
         self.assertAlmostEqual(tg.now().timestamp(), datetime.now().timestamp(), delta = 0.2)
 
+    def test_persist_domain(self):
+        tg = Eyeball()
+        td = tg.domain('example.com')
+        self.assertEqual(td.domain, 'example.com')
+        td.persist()
+        td2 = tg.domain('example.com')
+        td2.persist()
+        self.assertEqual(td, td2)
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    demo_db = Eyeball(start_demo_db=True)
+    unittest.main(failfast=True)
+    demo_db.stop_demo_db()
+

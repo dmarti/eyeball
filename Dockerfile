@@ -12,4 +12,3 @@ COPY src/pg_hba.conf src/schema.sql src/db_setup.sh data/db_dump.sql* /srv/eyeba
 RUN /srv/eyeball/db_setup.sh
 RUN service postgresql stop
 
-ENTRYPOINT ["/bin/sh"]
