@@ -32,9 +32,22 @@ class EyeballTestCase(unittest.TestCase):
         td2.persist()
         self.assertEqual(td, td2)
 
+    def test_adsrecord(self):
+        tg = Eyeball()
+        tr = tg.adsrecord(source = "exampleadstxt.com",
+                          domain = "aloodo.com",
+                          account_id = 31337,
+                          account_type = 'RESELLER',
+                          certification_authority_id = 'abc123'
+                          )
+        tr.persist()
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     demo_db = Eyeball(start_demo_db=True)
     unittest.main(failfast=True)
     demo_db.stop_demo_db()
+
+
+# vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python
 

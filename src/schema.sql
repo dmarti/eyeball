@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS relationship (
 	id SERIAL PRIMARY KEY,
 	source INT REFERENCES domain(id) NOT NULL,      -- ads.txt "domain" / sellers.json seller(domain)
 	destination INT REFERENCES domain(id) NOT NULL, -- ads.txt "adystem" / sellers.json (top level) domain
-	accountid TEXT, -- ads.txt account_id / sellers.json seller_id
+	account_id TEXT, -- ads.txt account_id / sellers.json seller_id
 	adstxt INT REFERENCES adstxt(id), -- NULL == no ads.txt for this relationship
 	sellersjson INT REFERENCES sellersjson(id),
 	created TIMESTAMP NOT NULL DEFAULT NOW(),

@@ -24,22 +24,28 @@ class Domain(object):
             return False
         return True
         
-    def persist(self):
-        with self.eyeball.conn.cursor() as curs:
-            if self.id is not None:
-                curs.execute('''UPDATE domain set domain = %s, owner = %s
-                                WHERE id = %s''',
-                    (self.domain, self.owner, self.id))
-            else:
-                curs.execute('''INSERT INTO domain (domain, owner)
-                                VALUES (%s, %s)
-                                ON CONFLICT (domain) DO UPDATE SET owner = %s
-                                RETURNING id''',
-                    (self.domain, self.owner, self.owner))
-                self.id = curs.fetchone()[0]
-            curs.connection.commit()
-        assert(self.id is not None)
-        return self
+    def _persist(self, curs):
+        if self.id is not None:
+            curs.execute('''UPDATE domain set domain = %s, owner = %s
+                            WHERE id = %s''',
+                (self.domain, self.owner, self.id))
+        else:
+            curs.execute('''INSERT INTO domain (domain, owner)
+                            VALUES (%s, %s)
+                            ON CONFLICT (domain) DO UPDATE SET owner = %s
+                            RETURNING id''',
+                (self.domain, self.owner, self.owner))
+            self.id = curs.fetchone()[0]
+        logging.debug("persisted %s" % self)
+
+    def persist(self, cursor=None):
+        if cursor:
+            return self._persist(cursor)
+        else:
+            with self.eyeball.conn.cursor() as curs:
+                self._persist(curs)
+                curs.connection.commit()
+                return self
 
     def refresh(self):
         if not self.id:
