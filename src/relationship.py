@@ -5,14 +5,19 @@ import logging
 class Relationship(object):
     eyeball = None
 
-    def __init__(self, source, destination, account_id,
-                 adstxt=None, sellersjson=None, rid=None):
+    def __init__(self, source, destination, account_id, rid=None):
         self.id = rid
-        self.source = self.eyeball.domain(source)
-        self.destination = self.eyeball.domain(destination)
+        try:
+            source.domain
+            self.source = source
+        except AttributeError:
+            self.source = self.eyeball.domain(source)
+        try:
+            destination.domain
+            self.destination = destination
+        except AttributeError:
+            self.destination = self.eyeball.domain(destination)
         self.account_id = account_id
-        self.adstxt=adstxt
-        self.sellersjson=sellersjson
         self.rid = rid
 
     def __repr__(self):
@@ -29,26 +34,20 @@ class Relationship(object):
             return False
         if self.account_id != other.account_id:
             return False
-        if self.adstxt != other.adstxt:
-            return False
-        if self.sellersjson != other.sellersjson:
-            return False
         return True
         
     def _persist(self, curs):
         self.source.persist(cursor=curs)
         self.destination.persist(cursor=curs)
         if self.id is not None:
-            curs.execute('''UPDATE relationship set source = %s, destination = %s,
-                            account_id = %s, adstxt = %s, sellersjson = %s
+            curs.execute('''UPDATE relationship set source = %s, destination = %s, account_id = %s
                             WHERE id = %s''',
-                (self.source, self.destination, self.account_id, self.adstxt, self.sellersjson, self.id))
+                (self.source.id, self.destination.id, self.account_id, self.id))
         else:
             curs.execute('''INSERT INTO relationship
-                            (source, destination, account_id, adstxt, sellersjson)
-                            VALUES (%s, %s, %s, %s, %s) RETURNING id''',
-                (self.source.id, self.destination.id, self.account_id,
-                 self.adstxt, self.sellersjson))
+                            (source, destination, account_id)
+                            VALUES (%s, %s, %s) RETURNING id''',
+                (self.source.id, self.destination.id, self.account_id))
             self.id = curs.fetchone()[0]
         logging.debug("persisted %s" % self)
 
@@ -76,7 +75,7 @@ class Relationship(object):
         if not destination:
             all_destinations = True
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT source, destination, account_id, adstxt, sellersjson, id FROM eyeball WHERE
+            curs.execute('''SELECT source, destination, account_id, id FROM eyeball WHERE
                             (id = %s OR %s) AND
                             (source = %s OR %s) AND
                             (destination = %s OR %s)

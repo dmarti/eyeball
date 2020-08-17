@@ -32,13 +32,31 @@ class EyeballTestCase(unittest.TestCase):
         td2.persist()
         self.assertEqual(td, td2)
 
+    def test_adstxt(self):
+        tg = Eyeball()
+        ta = tg.adstxt(domain="example.com", fulltext="# comment")
+        ta.persist()
+        ta2 = tg.adstxt.lookup_one(domain="example.com")
+        self.assertEqual(ta, ta2)
+
     def test_adsrecord(self):
         tg = Eyeball()
-        tr = tg.adsrecord(source = "exampleadstxt.com",
+        tr = tg.adsrecord(source = "example.com",
                           domain = "aloodo.com",
                           account_id = 31337,
                           account_type = 'RESELLER',
                           certification_authority_id = 'abc123'
+                          )
+        tr.persist()
+
+    def test_adsrecord_from_objects(self):
+        tg = Eyeball()
+        tr = tg.adsrecord(source = tg.domain("example.com"),
+                          domain = tg.domain("aloodo.com"),
+                          account_id = 31337,
+                          account_type = 'RESELLER',
+                          certification_authority_id = 'abc123',
+                          adstxt = tg.adstxt("example.com")
                           )
         tr.persist()
 

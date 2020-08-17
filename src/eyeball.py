@@ -17,6 +17,7 @@ except:
 import config
 from domain import Domain
 from adsrecord import AdsRecord
+from adstxt import AdsTxt
 from relationship import Relationship
 
 class Eyeball(object):
@@ -28,6 +29,8 @@ class Eyeball(object):
         self.logging = logging
         self.domain = Domain
         self.domain.eyeball = self
+        self.adstxt = AdsTxt
+        self.adstxt.eyeball = self
         self.adsrecord = AdsRecord
         self.adsrecord.eyeball = self
         self.relationship = Relationship

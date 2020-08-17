@@ -45,7 +45,6 @@ class Domain(object):
             with self.eyeball.conn.cursor() as curs:
                 self._persist(curs)
                 curs.connection.commit()
-                return self
 
     def refresh(self):
         if not self.id:
@@ -53,20 +52,29 @@ class Domain(object):
         return self.__class__.lookup(wid=self.id)
 
     @classmethod
-    def lookup(cls, did=None, owner=None):
-        if not did and not owner:
-            return None
-        (all_dids, all_owners) = (False, False)
+    def lookup_all(cls, did=None, domain=None, owner=None):
+        (all_dids, all_domains, all_owners) = (False, False, False)
         if not did:
             all_dids = True
+        if not domain:
+            all_domains = True
         if not owner:
             all_owners = True
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT id, domain, owner FROM eyeball WHERE
+            curs.execute('''SELECT id, domain, owner FROM domain WHERE
                             (id = %s OR %s) AND
+                            (domain = %s OR %s) AND
                             (owner = %s OR %s) 
-                            ''', (did, all_dids, owner, all_owners))
+                            ''', (did, all_dids, domain, all_domains, owner, all_owners))
             for row in curs.fetchall():
                 yield cls(*row)
+
+    @classmethod
+    def lookup_one(cls, did=None, domain=None, owner=None):
+        tmp = list(cls.lookup_all(did, domain, owner))
+        if len(tmp) == 1:
+            return tmp[0]
+        else:
+            return None
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

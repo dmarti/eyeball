@@ -6,11 +6,15 @@ class AdsRecord(object):
     eyeball = None
 
     def __init__(self, source, domain, account_id, account_type,
-                 certification_authority_id, aid=None):
+                 certification_authority_id, adstxt=None, aid=None):
         self.id = aid
         self.relationship = self.eyeball.relationship(source, domain, account_id)
         self.account_type = account_type
         self.certification_authority_id = certification_authority_id
+        if adstxt is None:
+            self.adstxt = self.eyeball.adstxt(domain)
+        else:
+            self.adstxt = adstxt
 
     @property
     def source(self):
@@ -39,18 +43,21 @@ class AdsRecord(object):
     def persist(self):
         with self.eyeball.conn.cursor() as curs:
             self.relationship.persist(cursor=curs)
+            self.adstxt.persist(cursor=curs)
 
             if self.id is not None:
                 curs.execute('''UPDATE adsrecord SET relationship = %s,
                                 account_type = %s,
-                                certification_authority_id = %s
+                                certification_authority_id = %s,
+                                adstxt = %s,
                                 WHERE id = %s''',
-                    (self.relationship.id, self.account_type, self.certification_authority_id, self.id))
+                    (self.relationship.id, self.account_type, self.certification_authority_id,
+                     self.adstxt.id, self.id))
             else:
-                curs.execute('''INSERT INTO adsrecord (relationship, account_type, certification_authority_id)
-                                VALUES (%s, %s, %s)
+                curs.execute('''INSERT INTO adsrecord (relationship, account_type, certification_authority_id, adstxt)
+                                VALUES (%s, %s, %s, %s)
                                 RETURNING id''',
-                    (self.relationship.id, self.account_type, self.certification_authority_id))
+                    (self.relationship.id, self.account_type, self.certification_authority_id, self.adstxt.id))
                 self.id = curs.fetchone()[0]
             curs.connection.commit()
         assert(self.id is not None)
@@ -72,7 +79,7 @@ class AdsRecord(object):
         if not owner:
             all_owners = True
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT id, domain, owner FROM eyeball WHERE
+            curs.execute('''SELECT id, domain, owner FROM domain WHERE
                             (id = %s OR %s) AND
                             (owner = %s OR %s) 
                             ''', (did, all_dids, owner, all_owners))
