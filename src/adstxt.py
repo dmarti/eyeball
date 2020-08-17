@@ -43,13 +43,13 @@ class AdsTxt(object):
         else:
             curs.execute('''INSERT INTO adstxt (domain, fulltext)
                             VALUES (%s, %s)
-                            RETURNING id''',
+                            RETURNING id, created, modified''',
                 (self.domain.id, self.fulltext))
-            self.id = curs.fetchone()[0]
+            (self.id, self.created, self.modified) = curs.fetchone()
         logging.debug("persisted %s" % self)
 
     def persist(self, cursor=None):
-        if cursor:
+        if cursor and not cursor.closed:
             return self._persist(cursor)
         else:
             with self.eyeball.conn.cursor() as curs:
@@ -64,17 +64,26 @@ class AdsTxt(object):
             all_aids = True
         if not domain:
             all_domains = True
+        did = None
         try:
             did = domain.id
         except:
-            did = cls.eyeball.domain.lookup_one(domain=domain).id
+            pass
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT id, domain, fulltext, created, modified FROM adstxt WHERE
+            if did is None:
+                domain = cls.eyeball.domain.lookup_one(domain=domain, cursor=curs)
+                if not domain:
+                    return []
+                else:
+                    did = domain.id
+            curs.execute('''SELECT domain, fulltext, created, modified, id FROM adstxt WHERE
                             (id = %s OR %s) AND
                             (domain = %s OR %s) 
                             ''', (aid, all_aids, did, all_domains))
             for row in curs.fetchall():
-                yield cls(*row)
+                tmp = cls(*row)
+                tmp.domain = domain
+                yield tmp
 
     @classmethod
     def lookup_one(cls, aid=None, domain=None):
@@ -82,6 +91,7 @@ class AdsTxt(object):
         if len(tmp) == 1:
             return tmp[0]
         else:
+            logging.debug("lookup_one adstxt for %s failed with count %d" % (domain, len(tmp)))
             return None
 
 

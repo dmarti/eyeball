@@ -44,7 +44,6 @@ class Domain(object):
         else:
             with self.eyeball.conn.cursor() as curs:
                 self._persist(curs)
-                curs.connection.commit()
 
     def refresh(self):
         if not self.id:
@@ -52,7 +51,7 @@ class Domain(object):
         return self.__class__.lookup(wid=self.id)
 
     @classmethod
-    def lookup_all(cls, did=None, domain=None, owner=None):
+    def _lookup_all(cls, did, domain, owner, curs):
         (all_dids, all_domains, all_owners) = (False, False, False)
         if not did:
             all_dids = True
@@ -60,21 +59,32 @@ class Domain(object):
             all_domains = True
         if not owner:
             all_owners = True
-        with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT id, domain, owner FROM domain WHERE
-                            (id = %s OR %s) AND
-                            (domain = %s OR %s) AND
-                            (owner = %s OR %s) 
-                            ''', (did, all_dids, domain, all_domains, owner, all_owners))
-            for row in curs.fetchall():
-                yield cls(*row)
+        result = []
+        curs.execute('''SELECT domain, owner, id FROM domain WHERE
+                        (id = %s OR %s) AND
+                        (domain = %s OR %s) AND
+                        (owner = %s OR %s) 
+                        ''', (did, all_dids, domain, all_domains, owner, all_owners))
+        for row in curs.fetchall():
+            result.append(cls(*row))
+        return result
 
     @classmethod
-    def lookup_one(cls, did=None, domain=None, owner=None):
-        tmp = list(cls.lookup_all(did, domain, owner))
+    def lookup_all(cls, did=None, domain=None, owner=None, cursor=None):
+        logging.debug("cursor is %s" % cursor)
+        if cursor and not cursor.closed:
+            return cls._lookup_all(did, domain, owner, cursor)
+        else:
+            with cls.eyeball.conn.cursor() as curs:
+                return cls._lookup_all(did, domain, owner, curs)
+
+    @classmethod
+    def lookup_one(cls, did=None, domain=None, owner=None, cursor=None):
+        tmp = list(cls.lookup_all(did, domain, owner, cursor))
         if len(tmp) == 1:
             return tmp[0]
         else:
+            logging.debug("lookup of %s failed with count %d" % (domain, len(tmp)))
             return None
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

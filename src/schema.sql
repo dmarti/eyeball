@@ -32,13 +32,14 @@ EXCEPTION
         WHEN duplicate_object THEN null;
 END $$;
 
+-- sellers.json files
 CREATE TABLE IF NOT EXISTS sellersjson (
 	id SERIAL PRIMARY KEY,
 	domain INT REFERENCES domain(id),
-	contact_email TEXT, -- optional contact email
-	contact_address TEXT, -- optional contact postal address
-	version TEXT, -- version, required for sellers.json
-	ext TEXT, -- optional extensions
+	contact_email TEXT,     -- optional contact email
+	contact_address TEXT,   -- optional contact postal address
+	version TEXT NOT NULL,  -- version, required
+	ext TEXT,               -- optional extensions
 	created TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS relationship (
 DROP TRIGGER IF EXISTS update_relationship_modified ON adsrecord;
 CREATE TRIGGER update_relationship_modified BEFORE UPDATE ON relationship FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
-
+-- ads.txt records (lines)
 CREATE TABLE IF NOT EXISTS adsrecord (
 	id SERIAL PRIMARY KEY,
 	adstxt INT REFERENCES adstxt(id),
@@ -68,7 +69,6 @@ CREATE TABLE IF NOT EXISTS adsrecord (
 );
 DROP TRIGGER IF EXISTS update_adsrecord_modified ON adsrecord;
 CREATE TRIGGER update_adsrecord_modified BEFORE UPDATE ON adsrecord FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
 
 
 -- identifier objects found in sellers.json files
@@ -85,7 +85,7 @@ EXCEPTION
         WHEN duplicate_object THEN null;
 END $$;
 
-
+-- seller records from sellers.json files
 CREATE TABLE IF NOT EXISTS seller (
 	id SERIAL PRIMARY KEY,
 	sellersjson INT REFERENCES sellersjson(id),
