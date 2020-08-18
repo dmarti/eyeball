@@ -31,12 +31,8 @@ class EyeballTestCase(unittest.TestCase):
         td2 = tg.domain('example.com')
         td2.persist()
         self.assertEqual(td, td2)
-        td3 = tg.domain('example.com')
-        td3.persist()
+        td3 = tg.domain.lookup_one(domain='example.com')
         self.assertEqual(td, td3)
-
-        td4 = tg.domain.lookup_one(domain='example.com')
-        self.assertEqual(td, td4)
 
     def test_adstxt(self):
         tg = Eyeball()
@@ -65,6 +61,18 @@ class EyeballTestCase(unittest.TestCase):
                           adstxt = tg.adstxt("example.com")
                           )
         tr.persist()
+
+    def test_persist_adsrecord(self):
+        tg = Eyeball()
+        tr = tg.adsrecord(domain = tg.domain("aloodo.com"),
+                          account_id = 'xyz123',
+                          account_type = 'RESELLER',
+                          certification_authority_id = 'abc123',
+                          adstxt = tg.adstxt("example.com")
+                          )
+        tr.persist()
+        tr2 = tg.adsrecord.lookup_one(account_id='xyz123')
+        self.assert_equal(tr, tr2)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

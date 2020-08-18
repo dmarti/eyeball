@@ -5,9 +5,11 @@ import logging
 class AdsRecord(object):
     eyeball = None
 
-    def __init__(self, source, domain, account_id, account_type,
-                 certification_authority_id, adstxt=None, aid=None):
+    def __init__(self, domain, account_id, account_type, source=None,
+                 certification_authority_id=None, adstxt=None, aid=None):
         self.id = aid
+        if source is None:
+            source = adstxt.domain
         self.relationship = self.eyeball.relationship(source, domain, account_id)
         self.account_type = account_type
         self.certification_authority_id = certification_authority_id
@@ -69,17 +71,27 @@ class AdsRecord(object):
             self.persist()
         return self.__class__.lookup(wid=self.id)
 
+
+# FIXME (self, domain, account_id, account_type, source=None, certification_authority_id=None, adstxt=None, aid=None):
+
+# needs objects: 2 domains, 1 relationship, 1 adstxt
+
     @classmethod
-    def lookup_all(cls, did=None, owner=None):
-        if not did and not owner:
-            return None
-        (all_dids, all_owners) = (False, False)
-        if not did:
-            all_dids = True
-        if not owner:
-            all_owners = True
+    def lookup_all(cls, aid=None, domain=None, account_id=None, account_type=None,
+                   source=None, certification_authority_id=None, adstxt=None)
+        (all_aids, all_domains, all_account_ids, all_account_types,
+         all_sources, all_certification_authority_ids, all_adstxt) = (False, False, False, False, False, False, False)
+        if not aid:
+            all_aids = True
+        if not domain:
+            all_domains = True
+        if not account_id:
+            all_account_ids = True
+        if not account_type:
+            all_account_types = True
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT id, domain, owner FROM domain WHERE
+            curs.execute('''SELECT destination, account_id, account_type, source,
+            certification_authority_id, adstxt, aid FROM adsrecord_overview
                             (id = %s OR %s) AND
                             (owner = %s OR %s) 
                             ''', (did, all_dids, owner, all_owners))

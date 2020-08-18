@@ -15,6 +15,18 @@ CREATE TABLE IF NOT EXISTS domain (
 DROP TRIGGER IF EXISTS update_domain_modified ON domain;
 CREATE TRIGGER update_domain_modified BEFORE UPDATE ON domain FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
+-- This table describes publisher/seller relationships.
+CREATE TABLE IF NOT EXISTS relationship (
+	id SERIAL PRIMARY KEY,
+	source INT REFERENCES domain(id) NOT NULL,       -- ads.txt "domain" / sellers.json seller(domain)       usually publisher
+	destination INT REFERENCES domain(id) NOT NULL,  -- ads.txt "adystem" / sellers.json (top level) domain  usually adtech firm
+	account_id TEXT,                                 -- ads.txt account_id / sellers.json seller_id
+	created TIMESTAMP NOT NULL DEFAULT NOW(),
+	modified TIMESTAMP NOT NULL DEFAULT NOW()
+);
+DROP TRIGGER IF EXISTS update_relationship_modified ON adsrecord;
+CREATE TRIGGER update_relationship_modified BEFORE UPDATE ON relationship FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
 -- ads.txt files https://iabtechlab.com/wp-content/uploads/2019/03/IAB-OpenRTB-Ads.txt-Public-Spec-1.0.2.pdf
 CREATE TABLE IF NOT EXISTS adstxt (
 	id SERIAL PRIMARY KEY,
@@ -32,30 +44,6 @@ EXCEPTION
         WHEN duplicate_object THEN null;
 END $$;
 
--- sellers.json files
-CREATE TABLE IF NOT EXISTS sellersjson (
-	id SERIAL PRIMARY KEY,
-	domain INT REFERENCES domain(id),
-	contact_email TEXT,     -- optional contact email
-	contact_address TEXT,   -- optional contact postal address
-	version TEXT NOT NULL,  -- version, required
-	ext TEXT,               -- optional extensions
-	created TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-
--- This table describes publisher/seller relationships.
-CREATE TABLE IF NOT EXISTS relationship (
-	id SERIAL PRIMARY KEY,
-	source INT REFERENCES domain(id) NOT NULL,      -- ads.txt "domain" / sellers.json seller(domain)
-	destination INT REFERENCES domain(id) NOT NULL, -- ads.txt "adystem" / sellers.json (top level) domain
-	account_id TEXT, -- ads.txt account_id / sellers.json seller_id
-	created TIMESTAMP NOT NULL DEFAULT NOW(),
-	modified TIMESTAMP NOT NULL DEFAULT NOW()
-);
-DROP TRIGGER IF EXISTS update_relationship_modified ON adsrecord;
-CREATE TRIGGER update_relationship_modified BEFORE UPDATE ON relationship FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-
 -- ads.txt records (lines)
 CREATE TABLE IF NOT EXISTS adsrecord (
 	id SERIAL PRIMARY KEY,
@@ -69,6 +57,28 @@ CREATE TABLE IF NOT EXISTS adsrecord (
 );
 DROP TRIGGER IF EXISTS update_adsrecord_modified ON adsrecord;
 CREATE TRIGGER update_adsrecord_modified BEFORE UPDATE ON adsrecord FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+
+DROP VIEW IF EXISTS adsrecord_overview;
+CREATE VIEW adsrecord_overview AS
+	SELECT relationship.id AS relationship, relationship.source, relationship.destination, relationship.account_id,
+	domain.domain,
+	adsrecord.id as id, adsrecord.account_type, adsrecord.certification_authority_id, adsrecord.created, adsrecord.modified
+	FROM adsrecord LEFT OUTER JOIN relationship ON relationship.id = adsrecord.relationship
+	LEFT OUTER JOIN domain ON relationship.domain = domain.id;
+
+
+-- sellers.json files
+CREATE TABLE IF NOT EXISTS sellersjson (
+	id SERIAL PRIMARY KEY,
+	domain INT REFERENCES domain(id),
+	contact_email TEXT,     -- optional contact email
+	contact_address TEXT,   -- optional contact postal address
+	version TEXT NOT NULL,  -- version, required
+	ext TEXT,               -- optional extensions
+	created TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 
 
 -- identifier objects found in sellers.json files
