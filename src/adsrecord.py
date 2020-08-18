@@ -78,7 +78,7 @@ class AdsRecord(object):
 
     @classmethod
     def lookup_all(cls, aid=None, domain=None, account_id=None, account_type=None,
-                   source=None, certification_authority_id=None, adstxt=None)
+                   source=None, certification_authority_id=None, adstxt=None):
         (all_aids, all_domains, all_account_ids, all_account_types,
          all_sources, all_certification_authority_ids, all_adstxt) = (False, False, False, False, False, False, False)
         if not aid:
@@ -89,25 +89,30 @@ class AdsRecord(object):
             all_account_ids = True
         if not account_type:
             all_account_types = True
+        result = []
         with cls.eyeball.conn.cursor() as curs:
             curs.execute('''SELECT destination, account_id, account_type, source,
-            certification_authority_id, adstxt, aid FROM adsrecord_overview
+                                   certification_authority_id, adstxt, id
+                            FROM adsrecord_overview WHERE
                             (id = %s OR %s) AND
-                            (owner = %s OR %s) 
-                            ''', (did, all_dids, owner, all_owners))
+                            (domain = %s OR %s) AND
+                            (account_id = %s OR %s) AND
+                            (account_type = %s OR %s)
+                            ''', (aid, all_aids, domain, all_domains, account_id, all_account_ids,
+                                  account_type, all_account_types))
             for row in curs.fetchall():
-                yield cls(*row)
+                result.append(cls(*row))
+        return result
 
     @classmethod
-    def lookup_one(cls, did=None, owner=None):
-        try:
-            tmp = list(cls.lookup_all(rid, source, destination))
-            if len(tmp) == 1:
-                return tmp[0]
-            else:
-                return None
-        except:
-            raise NotImplementedError
+    def lookup_one(cls, aid=None, domain=None, account_id=None, account_type=None,
+                   source=None, certification_authority_id=None, adstxt=None):
+        tmp = cls.lookup_all(aid, domain, account_id, account_type,
+                             source, certification_authority_id, adstxt)
+        if len(tmp) == 1:
+            return tmp[0]
+        else:
+            return None
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

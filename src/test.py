@@ -23,17 +23,6 @@ class EyeballTestCase(unittest.TestCase):
         from datetime import datetime
         self.assertAlmostEqual(tg.now().timestamp(), datetime.now().timestamp(), delta = 0.2)
 
-    def test_persist_domain(self):
-        tg = Eyeball()
-        td = tg.domain('example.com')
-        self.assertEqual(td.domain, 'example.com')
-        td.persist()
-        td2 = tg.domain('example.com')
-        td2.persist()
-        self.assertEqual(td, td2)
-        td3 = tg.domain.lookup_one(domain='example.com')
-        self.assertEqual(td, td3)
-
     def test_adstxt(self):
         tg = Eyeball()
         ta = tg.adstxt(domain="x.example.com", fulltext="# comment")
@@ -53,8 +42,8 @@ class EyeballTestCase(unittest.TestCase):
 
     def test_adsrecord_from_objects(self):
         tg = Eyeball()
-        tr = tg.adsrecord(source = tg.domain("example.com"),
-                          domain = tg.domain("aloodo.com"),
+        tr = tg.adsrecord(source = "example.com",
+                          domain = "aloodo.com",
                           account_id = 31337,
                           account_type = 'RESELLER',
                           certification_authority_id = 'abc123',
@@ -64,7 +53,7 @@ class EyeballTestCase(unittest.TestCase):
 
     def test_persist_adsrecord(self):
         tg = Eyeball()
-        tr = tg.adsrecord(domain = tg.domain("aloodo.com"),
+        tr = tg.adsrecord(domain = "aloodo.com",
                           account_id = 'xyz123',
                           account_type = 'RESELLER',
                           certification_authority_id = 'abc123',
@@ -72,7 +61,7 @@ class EyeballTestCase(unittest.TestCase):
                           )
         tr.persist()
         tr2 = tg.adsrecord.lookup_one(account_id='xyz123')
-        self.assert_equal(tr, tr2)
+        self.assertEqual(tr, tr2)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

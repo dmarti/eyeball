@@ -15,7 +15,6 @@ except:
     sys.exit(0)
 
 import config
-from domain import Domain
 from adsrecord import AdsRecord
 from adstxt import AdsTxt
 from relationship import Relationship
@@ -27,8 +26,6 @@ class Eyeball(object):
         if applog is not None:
             logging = applog
         self.logging = logging
-        self.domain = Domain
-        self.domain.eyeball = self
         self.adstxt = AdsTxt
         self.adstxt.eyeball = self
         self.adsrecord = AdsRecord

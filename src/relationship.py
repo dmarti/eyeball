@@ -7,16 +7,8 @@ class Relationship(object):
 
     def __init__(self, source, destination, account_id, rid=None):
         self.id = rid
-        try:
-            source.domain
-            self.source = source
-        except AttributeError:
-            self.source = self.eyeball.domain(source)
-        try:
-            destination.domain
-            self.destination = destination
-        except AttributeError:
-            self.destination = self.eyeball.domain(destination)
+        self.source = source
+        self.destination = destination
         self.account_id = account_id
         self.rid = rid
 
@@ -37,17 +29,15 @@ class Relationship(object):
         return True
         
     def _persist(self, curs):
-        self.source.persist(cursor=curs)
-        self.destination.persist(cursor=curs)
         if self.id is not None:
             curs.execute('''UPDATE relationship set source = %s, destination = %s, account_id = %s
                             WHERE id = %s''',
-                (self.source.id, self.destination.id, self.account_id, self.id))
+                (self.source, self.destination, self.account_id, self.id))
         else:
             curs.execute('''INSERT INTO relationship
                             (source, destination, account_id)
                             VALUES (%s, %s, %s) RETURNING id''',
-                (self.source.id, self.destination.id, self.account_id))
+                (self.source, self.destination, self.account_id))
             self.id = curs.fetchone()[0]
         logging.debug("persisted %s" % self)
 
@@ -66,27 +56,34 @@ class Relationship(object):
         return self.__class__.lookup(rid=self.id)
 
     @classmethod
-    def lookup_all(cls, rid=None, source=None, destination=None):
-        (all_rids, all_sources, all_destinations) = (False, False, False)
-        if not rid:
+    def lookup_all(cls, rid=None, source=None, destination=None, account_id=None):
+        (all_rids, all_sources, all_destinations, all_account_ids) = (False, False, False, False)
+        if rid is None:
             all_rids = True
         if not source:
             all_source = True
         if not destination:
             all_destinations = True
+        if account_id is None:
+            all_account_ids = True
+        result = []
         with cls.eyeball.conn.cursor() as curs:
             curs.execute('''SELECT source, destination, account_id, id FROM eyeball WHERE
                             (id = %s OR %s) AND
                             (source = %s OR %s) AND
-                            (destination = %s OR %s)
-                            ''', (rid, all_rids, source, all_sources, destination, all_destinations))
+                            (destination = %s OR %s) AND
+                            (account_id = %s OR %s)
+                            ''', (rid, all_rids, source, all_sources,
+                                  destination, all_destinations,
+                                  account_id, all_account_ids))
             for row in curs.fetchall():
-                yield cls(*row)
+                result.append(cls(*row))
+        return result
 
     @classmethod
     def lookup_one(cls, rid=None, source=None, destination=None):
         try:
-            tmp = list(cls.lookup_all(rid, source, destination))
+            tmp = cls.lookup_all(rid, source, destination)
             if len(tmp) == 1:
                 return tmp[0]
             else:
