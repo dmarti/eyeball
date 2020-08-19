@@ -26,4 +26,5 @@ set -x
 cp src/test_config.py src/config.py
 docker build --tag=eyeball_test .
 docker run --volume "$(pwd)"/src:/srv/eyeball:ro,Z \
+	--volume /var/cache/eyeball:/var/cache/eyeball:rw \
 	--entrypoint "/usr/bin/env" eyeball_test python3 /srv/eyeball/test.py
