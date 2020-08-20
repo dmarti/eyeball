@@ -83,8 +83,8 @@ class AdsTxt(object):
                     (domain, account_id, account_type) = fields
                 else:
                     continue
-                record = cls.eyeball.adsrecord(domain, account_id, account_type,
-                                               entry.domain, certification_authority_id, entry)
+                record = cls.eyeball.relationship(entry.domain, domain, account_id,
+                                                  account_type=account_type, adstxt = entry)
                 record.persist()
             except:
                 raise
