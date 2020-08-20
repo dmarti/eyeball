@@ -67,6 +67,12 @@ class EyeballTestCase(unittest.TestCase):
         tg = Eyeball()
         tg.adstxt.parse_file('https://blog.zgp.org/ads.txt')
         tg.adstxt.parse_file('https://nytimes.com/ads.txt')
+        self.assertIn('aloodo.com', list(tg.relationship.all_sellers()))
+
+    def test_mirror_all_sellers(self):
+        tg = Eyeball()
+        tg.adstxt.parse_file('https://nytimes.com/ads.txt')
+        tg.crawler.mirror_all_sellers()
 
 
 if __name__ == '__main__':

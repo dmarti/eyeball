@@ -70,7 +70,7 @@ class Relationship(object):
             all_account_ids = True
         result = []
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT source, destination, account_id, id FROM eyeball WHERE
+            curs.execute('''SELECT source, destination, account_id, id FROM relationship WHERE
                             (id = %s OR %s) AND
                             (source = %s OR %s) AND
                             (destination = %s OR %s) AND
@@ -92,5 +92,13 @@ class Relationship(object):
                 return None
         except:
             raise NotImplementedError
+
+    @classmethod
+    def all_sellers(cls):
+        with cls.eyeball.conn.cursor() as curs:
+            curs.execute('SELECT DISTINCT destination FROM relationship ORDER BY destination')
+            for row in curs.fetchall():
+                yield(row[0])
+
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

@@ -17,6 +17,7 @@ except:
 import config
 from adsrecord import AdsRecord
 from adstxt import AdsTxt
+from crawl import Crawler
 from relationship import Relationship
 
 class Eyeball(object):
@@ -30,6 +31,8 @@ class Eyeball(object):
         self.adstxt.eyeball = self
         self.adsrecord = AdsRecord
         self.adsrecord.eyeball = self
+        self.crawler = Crawler
+        self.crawler.eyeball = self
         self.relationship = Relationship
         self.relationship.eyeball = self
         if start_demo_db:

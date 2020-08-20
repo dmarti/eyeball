@@ -23,7 +23,9 @@ docker ps &> /dev/null || dockerfail
 set -e
 set -x
 
-chmod -R a+r /var/cache/eyeball/*
+sudo chown -R root.www /var/cache/eyeball
+sudo chmod -R g+w /var/cache/eyeball/*
+
 cp src/test_config.py src/config.py
 docker build --tag=eyeball_test .
 docker run --volume "$(pwd)"/src:/srv/eyeball:ro,Z \
