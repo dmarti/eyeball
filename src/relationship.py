@@ -5,28 +5,6 @@ import logging
 class Relationship(object):
     eyeball = None
 
-    foo = '''
-        CREATE TABLE IF NOT EXISTS relationship (
-        id SERIAL PRIMARY KEY,
-        source TEXT NOT NULL,                     -- ads.txt "domain" / sellers.json seller(domain)       usually publisher
-        destination TEXT NOT NULL,                -- ads.txt "adystem" / sellers.json (top level) domain  usually adtech firm
-        account_id TEXT,                          -- ads.txt account_id / sellers.json seller_id
-        adstxt INT REFERENCES adstxt(id),
-        sellersjson INT REFERENCES sellersjson(id),
-        -- seller_id and publisher "domain" are in a "relationship" record
-        is_confidential BOOLEAN default FALSE,
-        seller_type seller_seller_type NOT NULL,
-        account_type ads_account_type NOT NULL,
-        certification_authority_id TEXT,          -- optional
-        is_passthrough BOOLEAN default FALSE,
-        name TEXT,    -- may be null for confidential records
-        domain TEXT,  -- "
-        comment TEXT, -- optional
-        created TIMESTAMP NOT NULL DEFAULT NOW(),
-        modified TIMESTAMP NOT NULL DEFAULT NOW()
-'''
-
-
     def __init__(self, source, destination, account_id, adstxt=None, sellersjson=None,
                  is_confidential=False, seller_type=None, account_type=None,
                  certification_authority_id=None,
@@ -84,7 +62,7 @@ class Relationship(object):
                  self.is_confidential, self.seller_type, self.account_type, self.certification_authority_id,
                  self.is_passthrough, self.name, self.comment, self.created, self.modified, self.id))
         else:
-            curs.execute('''INSERT INTO relationship ( source, destination, account_id, adstxt, sellersjson,
+            curs.execute('''INSERT INTO relationship (source, destination, account_id, adstxt, sellersjson,
                             is_confidential, seller_type, account_type, certification_authority_id, is_passthrough,
                             name, comment)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -115,14 +93,16 @@ class Relationship(object):
         if rid is None:
             all_rids = True
         if not source:
-            all_source = True
+            all_sources = True
         if not destination:
             all_destinations = True
         if account_id is None:
             all_account_ids = True
         result = []
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT source, destination, account_id, id FROM relationship WHERE
+            curs.execute('''SELECT source, destination, account_id, adstxt, sellersjson,
+                            is_confidential, seller_type, account_type, certification_authority_id,
+                            is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
                             (id = %s OR %s) AND
                             (source = %s OR %s) AND
                             (destination = %s OR %s) AND
@@ -131,16 +111,18 @@ class Relationship(object):
                                   destination, all_destinations,
                                   account_id, all_account_ids))
             for row in curs.fetchall():
+                logging.debug(row)
                 result.append(cls(*row))
         return result
 
     @classmethod
-    def lookup_one(cls, rid=None, source=None, destination=None):
+    def lookup_one(cls, rid=None, source=None, destination=None, account_id=None):
         try:
-            tmp = cls.lookup_all(rid, source, destination)
+            tmp = cls.lookup_all(rid, source, destination, account_id)
             if len(tmp) == 1:
                 return tmp[0]
             else:
+                logging.debug("failed with count %s" % len(tmp))
                 return None
         except:
             raise NotImplementedError
