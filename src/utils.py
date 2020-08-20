@@ -42,6 +42,8 @@ def snarf_file(url, category):
         with open(filename, 'r', encoding='utf-8') as fdin:
             return fdin.read()
     except:
+        logging.warning("Could not find file for %s in category %s" % (url, category))
+        raise
         return('')
 
 def spew_file(filename, content):

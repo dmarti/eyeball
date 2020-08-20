@@ -63,6 +63,12 @@ class EyeballTestCase(unittest.TestCase):
         tr2 = tg.adsrecord.lookup_one(account_id='xyz123')
         self.assertEqual(tr, tr2)
 
+    def test_parse_adstxt(self):
+        tg = Eyeball()
+        tg.adstxt.parse_file('https://blog.zgp.org/ads.txt')
+        tg.adstxt.parse_file('https://nytimes.com/ads.txt')
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     demo_db = Eyeball(start_demo_db=True)

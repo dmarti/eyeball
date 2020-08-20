@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import logging
+from urllib.parse import urlparse
+
+from utils import path_to_url, snarf_file
 
 class AdsTxt(object):
     eyeball = None
@@ -51,6 +54,41 @@ class AdsTxt(object):
                 self._persist(curs)
                 curs.connection.commit()
                 return self
+
+    @classmethod
+    def parse_file(cls, url):
+        domain = urlparse(url).netloc
+        if ':' in domain:
+            raise NotImplementedError
+        fulltext = snarf_file(url, 'ads')
+        entry = cls(domain, fulltext)
+        in_headers = True
+        for line in fulltext.splitlines():
+            if not line: # out of headers with 1st blank line
+                in_headers=False
+            if in_headers:
+                continue
+            if '#' in line:
+                (stuff, comment) = line.split('#', 1)
+                line = stuff
+            try:
+                fields = line.split(',', 3)
+                for i in range(len(fields)):
+                    fields[i] = fields[i].strip()
+                (domain, account_id, account_type,
+                 certification_authority_id) = (None, None, None, None)
+                if len(fields) == 4:
+                    (domain, account_id, account_type, certification_authority_id) = fields
+                elif len(fields) == 3:
+                    (domain, account_id, account_type) = fields
+                else:
+                    continue
+                record = cls.eyeball.adsrecord(domain, account_id, account_type,
+                                               entry.domain, certification_authority_id, entry)
+                record.persist()
+            except:
+                raise
+
 
     @classmethod
     def lookup_all(cls, aid=None, domain=None):

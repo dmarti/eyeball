@@ -10,6 +10,8 @@ class AdsRecord(object):
         self.id = aid
         if source is None:
             source = adstxt.domain
+        if not domain:
+            raise NotImplementedError
         self.relationship = self.eyeball.relationship(source, domain, account_id)
         self.account_type = account_type
         self.certification_authority_id = certification_authority_id
@@ -44,8 +46,10 @@ class AdsRecord(object):
 
     def persist(self):
         with self.eyeball.conn.cursor() as curs:
-            self.relationship.persist(cursor=curs)
-            self.adstxt.persist(cursor=curs)
+            if not self.relationship.id:
+                self.relationship.persist(cursor=curs)
+            if not self.adstxt.id:
+                self.adstxt.persist(cursor=curs)
 
             if self.id is not None:
                 curs.execute('''UPDATE adsrecord SET relationship = %s,

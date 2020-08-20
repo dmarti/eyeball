@@ -11,6 +11,8 @@ class Relationship(object):
         self.destination = destination
         self.account_id = account_id
         self.rid = rid
+        if self.source is None or self.destination is None:
+            raise NotImplementedError
 
     def __repr__(self):
         return "relationship %s %s" % (self.source, self.destination)
