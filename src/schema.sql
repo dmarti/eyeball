@@ -67,9 +67,12 @@ CREATE TABLE IF NOT EXISTS sellersjson (
 	contact_address TEXT,   -- optional contact postal address
 	version TEXT NOT NULL,  -- version, required
 	ext TEXT,               -- optional extensions
-	created TIMESTAMP NOT NULL DEFAULT NOW()
+	fulltext TEXT,
+	created TIMESTAMP NOT NULL DEFAULT NOW(),
+	modified TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
+DROP TRIGGER IF EXISTS update_sellersjson_modified ON sellersjson;
+CREATE TRIGGER update_sellersjson_modified BEFORE UPDATE ON sellersjson FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 
 -- identifier objects found in sellers.json files

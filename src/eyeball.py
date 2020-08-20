@@ -19,6 +19,7 @@ from adsrecord import AdsRecord
 from adstxt import AdsTxt
 from crawl import Crawler
 from relationship import Relationship
+from sellers import Sellers
 
 class Eyeball(object):
 
@@ -35,6 +36,8 @@ class Eyeball(object):
         self.crawler.eyeball = self
         self.relationship = Relationship
         self.relationship.eyeball = self
+        self.sellers = Sellers
+        self.sellers.eyeball = self
         if start_demo_db:
             self.start_demo_db()
         self.connect()

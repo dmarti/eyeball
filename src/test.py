@@ -30,6 +30,13 @@ class EyeballTestCase(unittest.TestCase):
         ta2 = tg.adstxt.lookup_one(domain="x.example.com")
         self.assertEqual(ta, ta2)
 
+    def test_sellers(self):
+        tg = Eyeball()
+        ts = tg.sellers(domain="ad.aloodo.com", contact_email="webmaster@aloodo.com")
+        ts.persist()
+        ts2 = tg.sellers.lookup_one(domain="ad.aloodo.com")
+        self.assertEqual(ts, ts2)
+
     def test_adsrecord(self):
         tg = Eyeball()
         tr = tg.adsrecord(source = "example.com",
@@ -73,6 +80,8 @@ class EyeballTestCase(unittest.TestCase):
         tg = Eyeball()
         tg.adstxt.parse_file('https://nytimes.com/ads.txt')
         tg.crawler.mirror_all_sellers()
+
+
 
 
 if __name__ == '__main__':
