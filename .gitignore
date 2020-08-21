@@ -4,6 +4,9 @@ conf/config.py
 # data (for local use only)
 data/
 
+# temp copy of config file
+src/config.py
+
 # editor temp files
 *.swp
 
