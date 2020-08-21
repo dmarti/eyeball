@@ -55,7 +55,8 @@ END $$;
 -- This table describes publisher/seller relationships.
 CREATE TABLE IF NOT EXISTS relationship (
 	id SERIAL PRIMARY KEY,
-	source TEXT NOT NULL,                     -- ads.txt "domain" / sellers.json seller(domain)       usually publisher
+	source TEXT,                              -- ads.txt "domain" / sellers.json seller(domain)       usually publisher
+	                                          -- source is null if this is a confidential sellers.json seller
 	destination TEXT NOT NULL,                -- ads.txt "adystem" / sellers.json (top level) domain  usually adtech firm
 	account_id TEXT,                          -- ads.txt account_id / sellers.json seller_id
 	adstxt INT REFERENCES adstxt(id),

@@ -60,13 +60,21 @@ class Sellers(object):
         logging.debug("persisted %s" % self)
 
     def persist(self, cursor=None):
-        if cursor and not cursor.closed:
-            return self._persist(cursor)
-        else:
-            with self.eyeball.conn.cursor() as curs:
-                self._persist(curs)
-                curs.connection.commit()
-                return self
+        conn = None
+        try:
+            if cursor:
+                conn = cursor.connection
+                return self._persist(cursor)
+            else:
+                with self.eyeball.conn.cursor() as curs:
+                    conn = curs.connection
+                    self._persist(curs)
+                    conn.commit()
+                    return self
+        except Exception as e:
+            logging.info("Failed to persist %s: %s" % (self, e))
+            conn.rollback()
+            return None
 
     @classmethod
     def parse_file(cls, url):
@@ -75,26 +83,36 @@ class Sellers(object):
             raise NotImplementedError
         fulltext = snarf_file(url, 'sellers')
         entry = cls(domain, fulltext)
-        data = json.loads(fulltext.split('\n\n',1)[1])
+        try:
+            data = json.loads(fulltext.split('\n\n',1)[1])
+        except:
+            logging.info("Missing or invalid content for %s" % url)
+            return
         for seller in data['sellers']:
-            rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
-                                                         source=seller['domain'],
-                                                         destination=domain)
-            rel.name = data.get('name')
-            rel.sellersjson = entry
-            rel.is_confidential = data.get('is_confidential', False)
-            rel.seller_type = data.get('seller_type')
-            rel.account_type = data.get('account_type')
-            if rel.account_type:
-                rel.account_type = rel.account_type.upper()
-            rel.certification_authority_id = data.get('certification_authority_id')
-            rel.is_passthrough = data.get('is_passthrough')
-            rel.name = data.get('name')
-            rel.comment = data.get('comment')
             try:
-                rel.persist()
-            except:
-                logging.warning("parse error in %s" % entry)
+                rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
+                                                             source=seller.get('domain'),
+                                                             destination=domain)
+                rel.name = data.get('name')
+                rel.sellersjson = entry
+                rel.is_confidential = data.get('is_confidential', False)
+                rel.seller_type = data.get('seller_type')
+                rel.account_type = data.get('account_type')
+                if rel.account_type:
+                    rel.account_type = rel.account_type.upper()
+                rel.certification_authority_id = data.get('certification_authority_id')
+                rel.is_passthrough = data.get('is_passthrough')
+                rel.name = data.get('name')
+                rel.comment = data.get('comment')
+                if not rel.persist():
+                    raise RuntimeError
+            except Exception as e:
+                logging.info('-------------------------------------------------------------------------------')
+                logging.info("Malformed seller entry in %s" % url)
+                logging.info(e)
+                logging.info(seller)
+                logging.info('-------------------------------------------------------------------------------')
+                raise
 
     @classmethod
     def lookup_all(cls, sid=None, domain=None):
@@ -126,7 +144,10 @@ class Sellers(object):
     @classmethod
     def parse_all(cls):
         for domain in cls.eyeball.relationship.all_sellers():
-            cls.parse_file('https://%s/sellers.json' % domain)
+            try:
+                cls.parse_file('https://%s/sellers.json' % domain)
+            except FileNotFoundError:
+                logging.warning("No sellers file mirrored for %s" % domain)
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

@@ -91,7 +91,7 @@ class Eyeball(object):
             return when
 
     def parse_all(self):
-        self.adstxt.parse_all()
         self.sellers.parse_all()
+        self.adstxt.parse_all()
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

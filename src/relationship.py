@@ -112,6 +112,8 @@ class Relationship(object):
             all_destinations = True
         if account_id is None:
             all_account_ids = True
+        else:
+            account_id = str(account_id)
         result = []
         with cls.eyeball.conn.cursor() as curs:
             curs.execute('''SELECT source, destination, account_id, adstxt, sellersjson,

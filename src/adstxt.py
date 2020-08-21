@@ -59,7 +59,7 @@ class AdsTxt(object):
     def parse_file(cls, url):
         domain = urlparse(url).netloc
         if ':' in domain:
-            raise NotImplementedError
+            domain = domain.split(':')[0]
         fulltext = snarf_file(url, 'ads')
         entry = cls(domain, fulltext)
         in_headers = True
@@ -74,6 +74,11 @@ class AdsTxt(object):
                 (stuff, comment) = line.split('#', 1)
                 line = stuff
             try:
+                line = line.strip()
+                if line.startswith('<'):
+                    logging.info("%s looks like HTML. Skipping." % url)
+                    logging.info(line)
+                    break
                 fields = line.split(',', 3)
                 for i in range(len(fields)):
                     fields[i] = fields[i].strip()
@@ -89,6 +94,7 @@ class AdsTxt(object):
                                                              destination=domain, account_id=account_id)
                 rel.account_type = account_type.upper()
                 rel.adstxt = entry
+                rel.certification_authority_id = certification_authority_id
                 if not rel.persist():
                     logging.info('-------------------------------------------------------------------------------')
                     logging.info("Error on line %d of %s" % (lineno, url))
@@ -125,7 +131,10 @@ class AdsTxt(object):
     @classmethod
     def parse_all(cls):
         for domain in cls.eyeball.relationship.all_sources():
-            cls.parse_file('https://%s/ads.txt' % domain)
+            try:
+                cls.parse_file('https://%s/ads.txt' % domain)
+            except FileNotFoundError:
+                pass
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

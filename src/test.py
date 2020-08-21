@@ -54,12 +54,11 @@ class EyeballTestCase(unittest.TestCase):
     def test_parse_adstxt(self):
         tg = Eyeball()
         tg.adstxt.parse_file('https://blog.zgp.org/ads.txt')
-        tg.adstxt.parse_file('https://nytimes.com/ads.txt')
         self.assertIn('aloodo.com', list(tg.relationship.all_sellers()))
 
     def test_parse_all(self):
         tg = Eyeball()
-        tg.sellers.parse_file('https://openx.com/sellers.json')
+        tg.adstxt.parse_file('https://nytimes.com/ads.txt')
         tg.parse_all()
 
 
