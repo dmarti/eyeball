@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import logging
 from urllib.parse import urlparse
 
@@ -7,17 +8,6 @@ from utils import path_to_url, snarf_file
 
 class Sellers(object):
     eyeball = None
-
-#-- sellers.json files
-#CREATE TABLE IF NOT EXISTS sellersjson (
-#        id SERIAL PRIMARY KEY,
-#        domain TEXT NOT NULL,
-#        contact_email TEXT,     -- optional contact email
-#        contact_address TEXT,   -- optional contact postal address
-#        version TEXT NOT NULL,  -- version, required
-#        ext TEXT,               -- optional extensions
-#        created TIMESTAMP NOT NULL DEFAULT NOW()
-#);
 
     def __init__(self, domain, contact_email=None, contact_address=None,
                  version='1.0', ext=None,
@@ -85,6 +75,26 @@ class Sellers(object):
             raise NotImplementedError
         fulltext = snarf_file(url, 'sellers')
         entry = cls(domain, fulltext)
+        data = json.loads(fulltext.split('\n\n',1)[1])
+        for seller in data['sellers']:
+            rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
+                                                         source=seller['domain'],
+                                                         destination=domain)
+            rel.name = data.get('name')
+            rel.sellersjson = entry
+            rel.is_confidential = data.get('is_confidential', False)
+            rel.seller_type = data.get('seller_type')
+            rel.account_type = data.get('account_type')
+            if rel.account_type:
+                rel.account_type = rel.account_type.upper()
+            rel.certification_authority_id = data.get('certification_authority_id')
+            rel.is_passthrough = data.get('is_passthrough')
+            rel.name = data.get('name')
+            rel.comment = data.get('comment')
+            try:
+                rel.persist()
+            except:
+                logging.warning("parse error in %s" % entry)
 
     @classmethod
     def lookup_all(cls, sid=None, domain=None):
@@ -104,17 +114,19 @@ class Sellers(object):
                 result.append(cls(*row))
         return result
 
-#    def __init__(self, domain, contact_email, contact_address, version, ext, fulltext='', created=None, modified=None, sid=None):
-
-
     @classmethod
     def lookup_one(cls, aid=None, domain=None):
         tmp = list(cls.lookup_all(aid, domain))
         if len(tmp) == 1:
             return tmp[0]
         else:
-            logging.debug("lookup_one adstxt for %s failed with count %d" % (domain, len(tmp)))
             return None
+            return None
+
+    @classmethod
+    def parse_all(cls):
+        for domain in cls.eyeball.relationship.all_sellers():
+            cls.parse_file('https://%s/sellers.json' % domain)
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

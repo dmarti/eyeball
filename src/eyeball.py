@@ -15,7 +15,6 @@ except:
     sys.exit(0)
 
 import config
-from adsrecord import AdsRecord
 from adstxt import AdsTxt
 from crawl import Crawler
 from relationship import Relationship
@@ -30,8 +29,6 @@ class Eyeball(object):
         self.logging = logging
         self.adstxt = AdsTxt
         self.adstxt.eyeball = self
-        self.adsrecord = AdsRecord
-        self.adsrecord.eyeball = self
         self.crawler = Crawler
         self.crawler.eyeball = self
         self.relationship = Relationship
@@ -92,5 +89,9 @@ class Eyeball(object):
             when = curs.fetchone()[0]
             when = when.replace(tzinfo=timezone.utc)
             return when
+
+    def parse_all(self):
+        self.adstxt.parse_all()
+        self.sellers.parse_all()
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

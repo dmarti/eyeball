@@ -15,11 +15,17 @@ class Relationship(object):
         self.account_id = account_id
         self.adstxt = adstxt
         self.sellersjson = sellersjson
-        self.is_confidential = is_confidential
-        self.seller_type = seller_type
-        self.account_type = account_type
+        self.is_confidential = not not is_confidential
+        if seller_type:
+            self.seller_type = seller_type.upper()
+        else:
+            self.seller_type = None
+        if account_type:
+            self.account_type = account_type.upper()
+        else:
+            self.account_type = None
         self.certification_authority_id = certification_authority_id
-        self.is_passthrough = is_passthrough
+        self.is_passthrough = not not is_passthrough
         self.name = name
         self.comment = comment
         self.created = created
@@ -44,11 +50,11 @@ class Relationship(object):
         
     def _persist(self, curs):
         (aid, jid) = (self.adstxt, self.sellersjson)
-        if self.adstxt:
+        if self.adstxt and not isinstance(self.adstxt, int):
             if not self.adstxt.id:
                 self.adstxt.persist()
             aid = self.adstxt.id       
-        if self.sellersjson:
+        if self.sellersjson and not isinstance(self.sellersjson, int):
             if not self.sellersjson.id:
                 self.sellersjson.persist()
             jid = self.sellersjson.id
@@ -71,16 +77,24 @@ class Relationship(object):
                      self.is_confidential, self.seller_type, self.account_type, self.certification_authority_id,
                      self.is_passthrough, self.name, self.comment))
             self.id = curs.fetchone()[0]
-        logging.debug("persisted %s" % self)
+        return self
 
     def persist(self, cursor=None):
-        if cursor:
-            return self._persist(cursor)
-        else:
-            with self.eyeball.conn.cursor() as curs:
-                self._persist(curs)
-                curs.connection.commit()
-                return self
+        conn = None
+        try:
+            if cursor:
+                conn = cursor.connection
+                return self._persist(cursor)
+            else:
+                with self.eyeball.conn.cursor() as curs:
+                    conn = curs.connection
+                    self._persist(curs)
+                    conn.commit()
+                    return self
+        except Exception as e:
+            logging.info("Failed to persist %s: %s" % (self, e))
+            conn.rollback()
+            return None
 
     def refresh(self):
         if not self.id:
@@ -111,7 +125,6 @@ class Relationship(object):
                                   destination, all_destinations,
                                   account_id, all_account_ids))
             for row in curs.fetchall():
-                logging.debug(row)
                 result.append(cls(*row))
         return result
 
@@ -122,15 +135,28 @@ class Relationship(object):
             if len(tmp) == 1:
                 return tmp[0]
             else:
-                logging.debug("failed with count %s" % len(tmp))
                 return None
         except:
             raise NotImplementedError
 
     @classmethod
+    def lookup_or_new(cls, rid=None, source=None, destination=None, account_id=None):
+        tmp = cls.lookup_one(rid, source, destination, account_id)
+        if tmp:
+            return tmp
+        return cls(source, destination, account_id)
+
+    @classmethod
     def all_sellers(cls):
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('SELECT DISTINCT destination FROM relationship ORDER BY destination')
+            curs.execute('SELECT DISTINCT destination FROM relationship')
+            for row in curs.fetchall():
+                yield(row[0])
+
+    @classmethod
+    def all_sources(cls):
+        with cls.eyeball.conn.cursor() as curs:
+            curs.execute('SELECT DISTINCT source FROM relationship')
             for row in curs.fetchall():
                 yield(row[0])
 

@@ -81,10 +81,11 @@ class Crawler(object):
             raise NotImplementedError
 
     @classmethod
-    def mirror_all_sellers(cls):
+    def mirror_all(cls):
         for domain in cls.eyeball.relationship.all_sellers():
-            logging.info("Mirroring seller domain %s" % domain)
             cls.mirror_domain(domain, 'sellers')
+        for domain in cls.eyeball.relationship.all_sources():
+            cls.mirror_domain(domain, 'ads')
 
 
 if __name__ == "__main__":

@@ -63,11 +63,13 @@ class AdsTxt(object):
         fulltext = snarf_file(url, 'ads')
         entry = cls(domain, fulltext)
         in_headers = True
+        lineno = 0
         for line in fulltext.splitlines():
             if not line: # out of headers with 1st blank line
                 in_headers=False
             if in_headers:
                 continue
+            lineno += 1
             if '#' in line:
                 (stuff, comment) = line.split('#', 1)
                 line = stuff
@@ -83,12 +85,14 @@ class AdsTxt(object):
                     (domain, account_id, account_type) = fields
                 else:
                     continue
-                record = cls.eyeball.relationship(entry.domain, domain, account_id,
-                                                  account_type=account_type, adstxt = entry)
-                record.persist()
-            except:
-                raise
-
+                rel = cls.eyeball.relationship.lookup_or_new(source=entry.domain,
+                                                             destination=domain, account_id=account_id)
+                rel.account_type = account_type.upper()
+                rel.adstxt = entry
+                if not rel.persist():
+                    logging.info("Error on line %d of %s" % (lineno, url))
+            except Exception as e:
+                logging.info("Failed to parse %s: %s" % (url, e))
 
     @classmethod
     def lookup_all(cls, aid=None, domain=None):
@@ -113,8 +117,12 @@ class AdsTxt(object):
         if len(tmp) == 1:
             return tmp[0]
         else:
-            logging.debug("lookup_one adstxt for %s failed with count %d" % (domain, len(tmp)))
             return None
+
+    @classmethod
+    def parse_all(cls):
+        for domain in cls.eyeball.relationship.all_sources():
+            cls.parse_file('https://%s/ads.txt' % domain)
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python
