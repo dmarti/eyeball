@@ -90,7 +90,10 @@ class AdsTxt(object):
                 rel.account_type = account_type.upper()
                 rel.adstxt = entry
                 if not rel.persist():
+                    logging.info('-------------------------------------------------------------------------------')
                     logging.info("Error on line %d of %s" % (lineno, url))
+                    logging.info(line)
+                    logging.info('-------------------------------------------------------------------------------')
             except Exception as e:
                 logging.info("Failed to parse %s: %s" % (url, e))
 
