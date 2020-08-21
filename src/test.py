@@ -56,12 +56,6 @@ class EyeballTestCase(unittest.TestCase):
         tg.adstxt.parse_file('https://blog.zgp.org/ads.txt')
         self.assertIn('aloodo.com', list(tg.relationship.all_sellers()))
 
-    def test_parse_all(self):
-        tg = Eyeball()
-        tg.adstxt.parse_file('https://nytimes.com/ads.txt')
-        tg.parse_all()
-
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     demo_db = Eyeball(start_demo_db=True)
