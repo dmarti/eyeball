@@ -94,4 +94,14 @@ class Eyeball(object):
         self.sellers.parse_all()
         self.adstxt.parse_all()
 
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    e = Eyeball(start_demo_db=True)
+    e.adstxt.parse_file('https://nytimes.com/ads.txt')
+    while True:
+        e.crawler.mirror_all()
+        e.parse_all()
+        
+
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

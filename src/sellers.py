@@ -80,7 +80,7 @@ class Sellers(object):
     def parse_file(cls, url):
         domain = urlparse(url).netloc
         if ':' in domain:
-            raise NotImplementedError
+            domain = domain.split(':')[0]
         fulltext = snarf_file(url, 'sellers')
         entry = cls(domain, fulltext)
         try:
