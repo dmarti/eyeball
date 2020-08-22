@@ -47,16 +47,39 @@ class Relationship(object):
         if self.account_id != other.account_id:
             return False
         return True
-        
+
+    @property
+    def is_valid(self):
+        return not self.validation_errors()
+
+    def validation_errors(self):
+        result = []
+        if not self.sellersjson and not self.adstxt:
+            result.append('has neither ads.txt nor sellers.json')
+        if self.adstxt and not self.source:
+            result.append('no source for an ads.txt entry')
+        if self.adstxt and not self.destination:
+            result.append('missing domain name for ad system')
+        if (self.account_type is not None and
+           self.account_type != 'DIRECT' and self.account_type != 'RESELLER'):
+            result.append('account type is not DIRECT or RESELLER')
+        if (self.seller_type is not None and 
+           self.seller_type != 'PUBLISHER' and self.seller_type != 'INTERMEDIARY'
+           and self.seller_type != 'BOTH'):
+            result.append('seller type is not PUBLISHER, INTERMEDIARY, or BOTH')
+        if not self.is_confidential and not self.source:
+            result.append('non-confidential entry has no seller domain')
+        return result
+
     def _persist(self, curs):
         (aid, jid) = (self.adstxt, self.sellersjson)
         if self.adstxt and not isinstance(self.adstxt, int):
             if not self.adstxt.id:
-                self.adstxt.persist()
+                self.adstxt.persist(cursor=curs)
             aid = self.adstxt.id       
         if self.sellersjson and not isinstance(self.sellersjson, int):
             if not self.sellersjson.id:
-                self.sellersjson.persist()
+                self.sellersjson.persist(cursor=curs)
             jid = self.sellersjson.id
         if self.id is not None:
             curs.execute('''UPDATE relationship set source = %s, destination = %s, account_id = %s,
@@ -115,19 +138,22 @@ class Relationship(object):
         else:
             account_id = str(account_id)
         result = []
-        with cls.eyeball.conn.cursor() as curs:
-            curs.execute('''SELECT source, destination, account_id, adstxt, sellersjson,
-                            is_confidential, seller_type, account_type, certification_authority_id,
-                            is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
-                            (id = %s OR %s) AND
-                            (source = %s OR %s) AND
-                            (destination = %s OR %s) AND
-                            (account_id = %s OR %s)
-                            ''', (rid, all_rids, source, all_sources,
-                                  destination, all_destinations,
-                                  account_id, all_account_ids))
-            for row in curs.fetchall():
-                result.append(cls(*row))
+        try:
+            with cls.eyeball.conn.cursor() as curs:
+                curs.execute('''SELECT source, destination, account_id, adstxt, sellersjson,
+                                is_confidential, seller_type, account_type, certification_authority_id,
+                                is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
+                                (id = %s OR %s) AND
+                                (source = %s OR %s) AND
+                                (destination = %s OR %s) AND
+                                (account_id = %s OR %s)
+                                ''', (rid, all_rids, source, all_sources,
+                                      destination, all_destinations,
+                                      account_id, all_account_ids))
+                for row in curs.fetchall():
+                    result.append(cls(*row))
+        except Exception as exc:
+            logging.warning(exc)
         return result
 
     @classmethod

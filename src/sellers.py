@@ -88,31 +88,37 @@ class Sellers(object):
         except:
             logging.info("Missing or invalid content for %s" % url)
             return
-        for seller in data['sellers']:
-            try:
-                rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
-                                                             source=seller.get('domain'),
-                                                             destination=domain)
-                rel.name = data.get('name')
-                rel.sellersjson = entry
-                rel.is_confidential = data.get('is_confidential', False)
-                rel.seller_type = data.get('seller_type')
-                rel.account_type = data.get('account_type')
-                if rel.account_type:
-                    rel.account_type = rel.account_type.upper()
-                rel.certification_authority_id = data.get('certification_authority_id')
-                rel.is_passthrough = data.get('is_passthrough')
-                rel.name = data.get('name')
-                rel.comment = data.get('comment')
-                if not rel.persist():
-                    raise RuntimeError
-            except Exception as e:
-                logging.info('-------------------------------------------------------------------------------')
-                logging.info("Malformed seller entry in %s" % url)
-                logging.info(e)
-                logging.info(seller)
-                logging.info('-------------------------------------------------------------------------------')
-                raise
+        with cls.eyeball.conn.cursor() as curs:
+            for seller in data['sellers']:
+                try:
+                    rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
+                                                                 source=seller.get('domain'),
+                                                                 destination=domain)
+                    rel.name = data.get('name')
+                    rel.sellersjson = entry
+                    rel.is_confidential = data.get('is_confidential', False)
+                    rel.seller_type = data.get('seller_type')
+                    rel.account_type = data.get('account_type')
+                    if rel.account_type:
+                        rel.account_type = rel.account_type.upper()
+                    rel.certification_authority_id = data.get('certification_authority_id')
+                    rel.is_passthrough = data.get('is_passthrough')
+                    rel.name = data.get('name')
+                    rel.comment = data.get('comment')
+                    if rel.is_valid:
+                        rel.persist(cursor=curs)
+                    else:
+                        logging.info('-------------------------------------------------------------------------------')
+                        logging.info("Malformed seller entry in %s" % url)
+                        logging.info(seller)
+                        for err in rel.validation_errors():
+                            logging.info(" - %s" % err)
+                        logging.info('-------------------------------------------------------------------------------')
+                except Exception as e:
+                    logging.error("Malformed seller entry in %s not caught by validation" % url)
+                    logging.error(seller)
+                    logging.error(e)
+                    raise
 
     @classmethod
     def lookup_all(cls, sid=None, domain=None):

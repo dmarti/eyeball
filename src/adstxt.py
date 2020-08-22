@@ -64,44 +64,50 @@ class AdsTxt(object):
         entry = cls(domain, fulltext)
         in_headers = True
         lineno = 0
-        for line in fulltext.splitlines():
-            if not line: # out of headers with 1st blank line
-                in_headers=False
-            if in_headers:
-                continue
-            lineno += 1
-            if '#' in line:
-                (stuff, comment) = line.split('#', 1)
-                line = stuff
-            try:
-                line = line.strip()
-                if line.startswith('<'):
-                    logging.info("%s looks like HTML. Skipping." % url)
-                    logging.info(line)
-                    break
-                fields = line.split(',', 3)
-                for i in range(len(fields)):
-                    fields[i] = fields[i].strip()
-                (domain, account_id, account_type,
-                 certification_authority_id) = (None, None, None, None)
-                if len(fields) == 4:
-                    (domain, account_id, account_type, certification_authority_id) = fields
-                elif len(fields) == 3:
-                    (domain, account_id, account_type) = fields
-                else:
+        with cls.eyeball.conn.cursor() as curs:
+            for line in fulltext.splitlines():
+                if not line: # out of headers with 1st blank line
+                    in_headers=False
+                if in_headers:
                     continue
-                rel = cls.eyeball.relationship.lookup_or_new(source=entry.domain,
-                                                             destination=domain, account_id=account_id)
-                rel.account_type = account_type.upper()
-                rel.adstxt = entry
-                rel.certification_authority_id = certification_authority_id
-                if not rel.persist():
-                    logging.info('-------------------------------------------------------------------------------')
-                    logging.info("Error on line %d of %s" % (lineno, url))
-                    logging.info(line)
-                    logging.info('-------------------------------------------------------------------------------')
-            except Exception as e:
-                logging.info("Failed to parse %s: %s" % (url, e))
+                lineno += 1
+                if '#' in line:
+                    (stuff, comment) = line.split('#', 1)
+                    line = stuff
+                try:
+                    line = line.strip()
+                    if line.startswith('<'):
+                        logging.info("%s looks like HTML. Skipping." % url)
+                        logging.info(line)
+                        break
+                    fields = line.split(',', 3)
+                    for i in range(len(fields)):
+                        fields[i] = fields[i].strip()
+                    (domain, account_id, account_type,
+                     certification_authority_id) = (None, None, None, None)
+                    if len(fields) == 4:
+                        (domain, account_id, account_type, certification_authority_id) = fields
+                    elif len(fields) == 3:
+                        (domain, account_id, account_type) = fields
+                    else:
+                        continue
+                    rel = cls.eyeball.relationship.lookup_or_new(source=entry.domain,
+                                                                 destination=domain, account_id=account_id)
+                    rel.account_type = account_type.upper()
+                    rel.adstxt = entry
+                    rel.certification_authority_id = certification_authority_id
+                    if rel.is_valid:
+                        rel.persist(cursor=curs)
+                    else:
+                        logging.info('-------------------------------------------------------------------------------')
+                        logging.info("Error on line %d of %s" % (lineno, url))
+                        logging.info(line)
+                        for err in rel.validation_errors():
+                            logging.info(" -  %s" % err)
+                        logging.info('-------------------------------------------------------------------------------')
+                except Exception as e:
+                    logging.error("Failed to parse %s: %s" % (url, e))
+                    raise
 
     @classmethod
     def lookup_all(cls, aid=None, domain=None):
