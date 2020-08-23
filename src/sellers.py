@@ -89,6 +89,8 @@ class Sellers(object):
             logging.info("Missing or invalid content for %s" % url)
             return
         with cls.eyeball.conn.cursor() as curs:
+            if not entry.persist(cursor=curs):
+                return False
             for seller in data['sellers']:
                 try:
                     rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
@@ -148,12 +150,19 @@ class Sellers(object):
             return None
 
     @classmethod
-    def parse_all(cls):
+    def parse_all(cls, max=0):
+        count = 0
         for domain in cls.eyeball.relationship.all_sellers():
+            if cls.lookup_all(domain=domain):
+                logging.info("https://%s/sellers.json already parsed." % domain)
+                continue
             try:
                 cls.parse_file('https://%s/sellers.json' % domain)
+                count += 1
+                if count == max:
+                    return
             except FileNotFoundError:
-                logging.warning("No sellers file mirrored for %s" % domain)
+                logging.warning("No sellers file cached for %s" % domain)
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

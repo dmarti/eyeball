@@ -91,8 +91,8 @@ class Eyeball(object):
             return when
 
     def parse_all(self):
-        self.sellers.parse_all()
-        self.adstxt.parse_all()
+        self.sellers.parse_all(max=4)
+        self.adstxt.parse_all(max=4)
 
 
 if __name__ == "__main__":

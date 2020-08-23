@@ -21,22 +21,19 @@ class Crawler(object):
     def mirror_url(cls, url, category):
         tmp = urlparse(url)
         if not tmp or not tmp.hostname or not tmp.netloc or not tmp.scheme or not tmp.scheme.startswith('http'):
-            logging.debug("Skipping bad url %s" % url)
+            logging.info("Skipping bad url %s" % url)
             return
         try:
             req = Request(url, headers={'User-Agent': 'eyeball'})
-            logging.debug("Mirroring %s" % url)
         except ValueError:
-            logging.debug("Skipping unrequestable URL: %s" % url)
+            logging.warning("Skipping unrequestable URL: %s" % url)
             return False
         filename = url_to_path(url, category)
         
         # FIXME handle stale files and multiple versions
         if os.path.exists(filename):
-            logging.debug("%s already mirrored at %s" % (url, filename))
+#           logging.info("Already mirrored: %s at %s" % (url, filename))
             return True
-        else:
-            logging.debug("file %s not found, fetching." % filename)
 
         try:
             res = urlopen(req, timeout=10)

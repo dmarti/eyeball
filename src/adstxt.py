@@ -47,13 +47,21 @@ class AdsTxt(object):
         logging.debug("persisted %s" % self)
 
     def persist(self, cursor=None):
-        if cursor and not cursor.closed:
-            return self._persist(cursor)
-        else:
-            with self.eyeball.conn.cursor() as curs:
-                self._persist(curs)
-                curs.connection.commit()
-                return self
+        conn = None
+        try:
+            if cursor:
+                conn = cursor.connection
+                return self._persist(cursor)
+            else:
+                with self.eyeball.conn.cursor() as curs:
+                    conn = curs.connection
+                    self._persist(curs)
+                    conn.commit()
+                    return self
+        except Exception as e:
+            logging.info("Failed to persist %s: %s" % (self, e))
+            conn.rollback()
+            return None
 
     @classmethod
     def parse_file(cls, url):
@@ -65,6 +73,8 @@ class AdsTxt(object):
         in_headers = True
         lineno = 0
         with cls.eyeball.conn.cursor() as curs:
+            if not entry.persist(cursor=curs):
+                return False    
             for line in fulltext.splitlines():
                 if not line: # out of headers with 1st blank line
                     in_headers=False
@@ -135,10 +145,17 @@ class AdsTxt(object):
             return None
 
     @classmethod
-    def parse_all(cls):
+    def parse_all(cls, max=0):
+        count = 0
         for domain in cls.eyeball.relationship.all_sources():
+            if cls.lookup_all(domain=domain):
+                logging.info("https://%s/ads.txt already parsed." % domain)
+                continue
             try:
                 cls.parse_file('https://%s/ads.txt' % domain)
+                count += 1
+                if count == max:
+                    return
             except FileNotFoundError:
                 pass
 
