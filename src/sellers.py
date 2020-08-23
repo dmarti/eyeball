@@ -153,16 +153,12 @@ class Sellers(object):
 
     @classmethod
     def parse_all(cls, max=0):
-        count = 0
         for domain in cls.eyeball.relationship.all_sellers():
             if cls.lookup_all(domain=domain):
                 logging.info("https://%s/sellers.json already parsed." % domain)
                 continue
             try:
                 cls.parse_file('https://%s/sellers.json' % domain)
-                count += 1
-                if count == max:
-                    return
             except FileNotFoundError:
                 logging.warning("No sellers file cached for %s" % domain)
 

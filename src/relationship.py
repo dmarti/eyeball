@@ -60,6 +60,10 @@ class Relationship(object):
             result.append('no source for an ads.txt entry')
         if self.adstxt and not self.destination:
             result.append('missing domain name for ad system')
+        if self.source and not '.' in self.source:
+            result.append('%s does not appear to be a domain name' % self.source)
+        if self.destination and not '.' in self.destination:
+            result.append('%s does not appear to be a domain name' % self.destination)
         if (self.account_type is not None and
            self.account_type != 'DIRECT' and self.account_type != 'RESELLER'):
             result.append('account type is not DIRECT or RESELLER')
