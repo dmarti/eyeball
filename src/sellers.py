@@ -64,7 +64,8 @@ class Sellers(object):
         try:
             if cursor:
                 conn = cursor.connection
-                return self._persist(cursor)
+                self._persist(cursor)
+                return self
             else:
                 with self.eyeball.conn.cursor() as curs:
                     conn = curs.connection

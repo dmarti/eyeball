@@ -9,7 +9,7 @@ try:
 except:
     print("This should be run on the server or container with Python dependencies installed.")
     print("To start the container and run tests, use test.sh")
-    sys.exit(0)
+    exit(1)
 
 from eyeball import Eyeball
 
@@ -51,11 +51,13 @@ class EyeballTestCase(unittest.TestCase):
         tr3 = tg.relationship.lookup_one(account_id='1337')
         self.assertEqual(tr, tr3)
         self.assertIn('sellerexample.com', list(tg.relationship.all_sellers()))
+        self.assertIn('example.com', list(tg.relationship.all_sources()))
 
     def test_parse_adstxt(self):
         tg = Eyeball()
         tg.adstxt.parse_file('https://blog.zgp.org/ads.txt')
         self.assertIn('aloodo.com', list(tg.relationship.all_sellers()))
+        self.assertIn('blog.zgp.org', list(tg.relationship.all_sources()))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

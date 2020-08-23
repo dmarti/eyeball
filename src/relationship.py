@@ -114,6 +114,7 @@ class Relationship(object):
                     self._persist(curs)
                     conn.commit()
                     return self
+            logging.debug("Persisted %s" % self)
         except Exception as e:
             logging.warning("Failed to persist %s: %s" % (self, e))
             conn.rollback()

@@ -51,7 +51,8 @@ class AdsTxt(object):
         try:
             if cursor:
                 conn = cursor.connection
-                return self._persist(cursor)
+                self._persist(cursor)
+                return self
             else:
                 with self.eyeball.conn.cursor() as curs:
                     conn = curs.connection
@@ -99,7 +100,7 @@ class AdsTxt(object):
                         (domain, account_id, account_type, certification_authority_id) = fields
                     elif len(fields) == 3:
                         (domain, account_id, account_type) = fields
-                    else:
+                    else: # Line is all comments or whitespace
                         continue
                     rel = cls.eyeball.relationship.lookup_or_new(source=entry.domain,
                                                                  destination=domain,
