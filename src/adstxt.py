@@ -102,7 +102,9 @@ class AdsTxt(object):
                     else:
                         continue
                     rel = cls.eyeball.relationship.lookup_or_new(source=entry.domain,
-                                                                 destination=domain, account_id=account_id)
+                                                                 destination=domain,
+                                                                 account_id=account_id,
+                                                                 cursor=curs)
                     rel.account_type = account_type.upper()
                     rel.adstxt = entry
                     rel.certification_authority_id = certification_authority_id
@@ -118,6 +120,7 @@ class AdsTxt(object):
                 except Exception as e:
                     logging.error("Failed to parse %s: %s" % (url, e))
                     raise
+            curs.connection.commit()
 
     @classmethod
     def lookup_all(cls, aid=None, domain=None):

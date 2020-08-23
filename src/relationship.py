@@ -115,17 +115,12 @@ class Relationship(object):
                     conn.commit()
                     return self
         except Exception as e:
-            logging.info("Failed to persist %s: %s" % (self, e))
+            logging.warning("Failed to persist %s: %s" % (self, e))
             conn.rollback()
             return None
 
-    def refresh(self):
-        if not self.id:
-            self.persist()
-        return self.__class__.lookup(rid=self.id)
-
     @classmethod
-    def lookup_all(cls, rid=None, source=None, destination=None, account_id=None):
+    def lookup_all(cls, rid=None, source=None, destination=None, account_id=None, cursor=None):
         (all_rids, all_sources, all_destinations, all_account_ids) = (False, False, False, False)
         if rid is None:
             all_rids = True
@@ -138,8 +133,10 @@ class Relationship(object):
         else:
             account_id = str(account_id)
         result = []
+        if cursor is None:
+            cursor = cls.eyeball.conn.cursor()
         try:
-            with cls.eyeball.conn.cursor() as curs:
+            with cursor as curs:
                 curs.execute('''SELECT source, destination, account_id, adstxt, sellersjson,
                                 is_confidential, seller_type, account_type, certification_authority_id,
                                 is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
@@ -157,9 +154,9 @@ class Relationship(object):
         return result
 
     @classmethod
-    def lookup_one(cls, rid=None, source=None, destination=None, account_id=None):
+    def lookup_one(cls, rid=None, source=None, destination=None, account_id=None, cursor=None):
         try:
-            tmp = cls.lookup_all(rid, source, destination, account_id)
+            tmp = cls.lookup_all(rid, source, destination, account_id, cursor)
             if len(tmp) == 1:
                 return tmp[0]
             else:
@@ -168,7 +165,7 @@ class Relationship(object):
             raise NotImplementedError
 
     @classmethod
-    def lookup_or_new(cls, rid=None, source=None, destination=None, account_id=None):
+    def lookup_or_new(cls, rid=None, source=None, destination=None, account_id=None, cursor=None):
         tmp = cls.lookup_one(rid, source, destination, account_id)
         if tmp:
             return tmp

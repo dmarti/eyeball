@@ -121,6 +121,7 @@ class Sellers(object):
                     logging.error(seller)
                     logging.error(e)
                     raise
+            curs.connection.commit()
 
     @classmethod
     def lookup_all(cls, sid=None, domain=None):
