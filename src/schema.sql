@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS relationship (
 	account_id TEXT,                          -- ads.txt account_id / sellers.json seller_id
 	adstxt INT REFERENCES adstxt(id),
 	sellersjson INT REFERENCES sellersjson(id),
-	-- seller_id and publisher "domain" are in a "relationship" record
 	is_confidential BOOLEAN default FALSE,
 	seller_type seller_seller_type,
 	account_type ads_account_type,
