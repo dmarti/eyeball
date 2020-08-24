@@ -94,7 +94,7 @@ class Sellers(object):
                 return False
             for seller in data['sellers']:
                 try:
-                    rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
+                    rel = cls.eyeball.relationship.lookup_or_new(account_id=seller.get('seller_id'),
                                                                  source=seller.get('domain'),
                                                                  destination=domain)
                     rel.name = data.get('name')
