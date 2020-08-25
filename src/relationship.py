@@ -11,6 +11,8 @@ class Relationship(object):
                  is_passthrough=False, name=None, comment=None,
                  created=None, modified=None, rid=None):
         self.source = source
+        if self.source and not '.' in self.source:
+            self.source = None
         self.destination = destination
         self.account_id = account_id
         self.adstxt = adstxt
@@ -71,8 +73,8 @@ class Relationship(object):
            self.seller_type != 'PUBLISHER' and self.seller_type != 'INTERMEDIARY'
            and self.seller_type != 'BOTH'):
             result.append('seller type is not PUBLISHER, INTERMEDIARY, or BOTH')
-        if not self.is_confidential and not self.source:
-            result.append('non-confidential entry has no seller domain')
+#        if not self.is_confidential and not self.source:
+#            result.append('non-confidential entry has no seller domain')
         return result
 
     def _persist(self, curs):

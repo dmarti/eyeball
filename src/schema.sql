@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS relationship (
 	created TIMESTAMP NOT NULL DEFAULT NOW(),
 	modified TIMESTAMP NOT NULL DEFAULT NOW()
 );
-DROP TRIGGER IF EXISTS update_relationship_modified ON adsrecord;
+DROP TRIGGER IF EXISTS update_relationship_modified ON relationship;
 CREATE TRIGGER update_relationship_modified BEFORE UPDATE ON relationship FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 
