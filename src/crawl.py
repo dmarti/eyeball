@@ -14,6 +14,10 @@ from urllib.request import Request, urlopen
 
 from utils import spew_file, url_to_path, touch_file
 
+def crawl_wrap(domain, category):
+    c = Crawler()
+    c.mirror_domain(domain, category)
+
 class Crawler(object):
     eyeball = None
 
@@ -32,7 +36,7 @@ class Crawler(object):
         
         # FIXME handle stale files and multiple versions
         if os.path.exists(filename):
-#           logging.info("Already mirrored: %s at %s" % (url, filename))
+#            logging.info("Already mirrored: %s at %s" % (url, filename))
             return True
 
         try:
@@ -79,15 +83,15 @@ class Crawler(object):
 
     @classmethod
     def mirror_all(cls):
-        for domain in cls.eyeball.relationship.all_sellers():
-            cls.mirror_domain(domain, 'sellers')
-        for domain in cls.eyeball.relationship.all_sources():
-            cls.mirror_domain(domain, 'ads')
-
+        with multiprocessing.Pool(processes=4) as pool:
+            for domain in cls.eyeball.relationship.all_sellers():
+                pool.apply_async(crawl_wrap, [domain, 'sellers'])
+            for domain in cls.eyeball.relationship.all_sources():
+                pool.apply_async(crawl_wrap, [domain, 'ads'])
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     c = Crawler()
     for domain in sys.argv[1:]:
         c.mirror_domain(domain)
-
+    

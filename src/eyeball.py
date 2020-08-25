@@ -91,17 +91,36 @@ class Eyeball(object):
             return when
 
     def parse_all(self):
-        self.sellers.parse_all(max=4)
-        self.adstxt.parse_all(max=4)
+        self.sellers.parse_all()
+        self.adstxt.parse_all()
+
+    def do_background(self):
+        if not os.fork():
+            seller_parser = self.__class__()
+            while True:
+                seller_parser.sellers.parse_all()
+        if not os.fork():
+            adstxt_parser = self.__class__()
+            while True:
+                adstxt_parser.adstxt.parse_all()
+        if not os.fork():
+            mirrorer = self.__class__()
+            while True:
+                mirrorer.crawler.mirror_all()
+        return
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     e = Eyeball(start_demo_db=True)
     e.adstxt.parse_file('https://nytimes.com/ads.txt')
+    e.do_background()
     while True:
-        e.crawler.mirror_all()
-        e.parse_all()
+        time.sleep(10)
+        logging.debug("tick")
+#    while True:
+#        e.crawler.mirror_all()
+#        e.parse_all()
         
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

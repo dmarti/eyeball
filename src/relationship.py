@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 
 import logging
+import re
+import validators
+
+def extract_domain(text):
+    if validators.domain(text):
+        return text
+    for chunk in re.split(' |/|:|\(|\)', text):
+        if validators.domain(chunk):
+            return chunk
+    return text
 
 class Relationship(object):
     eyeball = None
@@ -10,8 +20,8 @@ class Relationship(object):
                  certification_authority_id=None,
                  is_passthrough=False, name=None, comment=None,
                  created=None, modified=None, rid=None):
-        self.source = source
-        self.destination = destination
+        self.source = extract_domain(source)
+        self.destination = extract_domain(destination)
         self.account_id = account_id
         self.adstxt = adstxt
         self.sellersjson = sellersjson
@@ -62,9 +72,9 @@ class Relationship(object):
             result.append('account id but no seller domain')
         if self.adstxt and not self.destination:
             result.append('missing domain name for ad system')
-        if self.source and not '.' in self.source:
+        if self.source and not validators.domain(self.source):
             result.append('%s does not appear to be a domain name' % self.source)
-        if self.destination and not '.' in self.destination:
+        if self.destination and not validators.domain(self.destination):
             result.append('%s does not appear to be a domain name' % self.destination)
         if (self.account_type is not None and
            self.account_type != 'DIRECT' and self.account_type != 'RESELLER'):
@@ -73,8 +83,8 @@ class Relationship(object):
            self.seller_type != 'PUBLISHER' and self.seller_type != 'INTERMEDIARY'
            and self.seller_type != 'BOTH'):
             result.append('seller type is not PUBLISHER, INTERMEDIARY, or BOTH')
-        if not self.is_confidential and not self.source:
-            result.append('non-confidential entry has no seller domain')
+#        if not self.is_confidential and not self.source:
+#            result.append('non-confidential entry has no seller domain')
         return result
 
     def _persist(self, curs):
@@ -184,15 +194,18 @@ class Relationship(object):
     @classmethod
     def all_sellers(cls):
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('SELECT DISTINCT destination FROM relationship')
+            curs.execute('SELECT DISTINCT destination FROM relationship ORDER BY destination')
             for row in curs.fetchall():
-                yield(row[0])
+                if validators.domain(row[0]):
+                    yield(row[0])
 
     @classmethod
     def all_sources(cls):
         with cls.eyeball.conn.cursor() as curs:
-            curs.execute('SELECT DISTINCT source FROM relationship')
+            curs.execute('SELECT DISTINCT source FROM relationship ORDER BY source')
             for row in curs.fetchall():
-                yield(row[0])
+                if validators.domain(row[0]):
+                    yield(row[0])
+
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

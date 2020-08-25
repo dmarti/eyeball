@@ -92,36 +92,46 @@ class Sellers(object):
         with cls.eyeball.conn.cursor() as curs:
             if not entry.persist(cursor=curs):
                 return False
-            for seller in data['sellers']:
-                try:
-                    rel = cls.eyeball.relationship.lookup_or_new(account_id=seller['seller_id'],
-                                                                 source=seller.get('domain'),
-                                                                 destination=domain)
-                    rel.name = data.get('name')
-                    rel.sellersjson = entry
-                    rel.is_confidential = data.get('is_confidential', False)
-                    rel.seller_type = data.get('seller_type')
-                    rel.account_type = data.get('account_type')
-                    if rel.account_type:
-                        rel.account_type = rel.account_type.upper()
-                    rel.certification_authority_id = data.get('certification_authority_id')
-                    rel.is_passthrough = data.get('is_passthrough')
-                    rel.name = data.get('name')
-                    rel.comment = data.get('comment')
-                    if rel.is_valid:
-                        rel.persist(cursor=curs)
-                    else:
-                        logging.info('-------------------------------------------------------------------------------')
-                        logging.info("Malformed seller entry in %s" % url)
-                        logging.info(seller)
-                        for err in rel.validation_errors():
-                            logging.info(" - %s" % err)
-                        logging.info('-------------------------------------------------------------------------------')
-                except Exception as e:
-                    logging.error("Malformed seller entry in %s not caught by validation" % url)
-                    logging.error(seller)
-                    logging.error(e)
-                    raise
+            try:
+                for seller in data['sellers']:
+                    try:
+                        pub_domain = seller.get('domain')
+                        if pub_domain:
+                            try:
+                                pub_domain = pub_domain.strip()
+                            except:
+                                pass
+                        rel = cls.eyeball.relationship.lookup_or_new(account_id=seller.get('seller_id'),
+                                                                     source=pub_domain,
+                                                                     destination=domain)
+                        rel.name = data.get('name')
+                        rel.sellersjson = entry
+                        rel.is_confidential = data.get('is_confidential', False)
+                        rel.seller_type = data.get('seller_type')
+                        rel.account_type = data.get('account_type')
+                        if rel.account_type:
+                            rel.account_type = rel.account_type.upper()
+                        rel.certification_authority_id = data.get('certification_authority_id')
+                        rel.is_passthrough = data.get('is_passthrough')
+                        rel.name = data.get('name')
+                        rel.comment = data.get('comment')
+                        if rel.is_valid:
+                            rel.persist(cursor=curs)
+                        else:
+                            logging.info('-------------------------------------------------------------------------------')
+                            logging.info("Malformed seller entry in %s" % url)
+                            logging.info(seller)
+                            for err in rel.validation_errors():
+                                logging.info(" - %s" % err)
+                            logging.info('-------------------------------------------------------------------------------')
+                    except Exception as e:
+                        logging.error("Malformed seller entry in %s not caught by validation" % url)
+                        logging.error(seller)
+                        logging.error(e)
+                        raise
+            except Exception as e:
+                logging.info("Failed to parse %s" % url)
+                logging.error(e)
             curs.connection.commit()
 
     @classmethod
