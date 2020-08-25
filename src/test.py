@@ -59,6 +59,11 @@ class EyeballTestCase(unittest.TestCase):
         self.assertIn('aloodo.com', list(tg.relationship.all_sellers()))
         self.assertIn('blog.zgp.org', list(tg.relationship.all_sources()))
 
+    def test_extract_domain(self):
+        from relationship import extract_domain
+        for item in ('https://example.com/warez/', 'Example Dot Com (example.com)', 'example.com/'):
+            self.assertEqual('example.com', extract_domain(item))
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     demo_db = Eyeball(start_demo_db=True)

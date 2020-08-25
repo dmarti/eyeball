@@ -26,8 +26,9 @@ set -x
 sudo chown -R root.www /var/cache/eyeball
 sudo chmod -R g+w /var/cache/eyeball/*
 
+container_name=$(basename $1 .py)
 cp src/test_config.py src/config.py
-docker build --tag=eyeball_test .
+docker build --tag=eyeball_$container_name .
 docker run --volume "$(pwd)"/src:/srv/eyeball:ro,Z \
 	--volume /var/cache/eyeball:/var/cache/eyeball:rw,Z \
-	--entrypoint "/usr/bin/env" eyeball_test python3 /srv/eyeball/$1
+	--entrypoint "/usr/bin/env" eyeball_$container_name python3 /srv/eyeball/$1
