@@ -68,6 +68,8 @@ class Relationship(object):
             result.append('has neither ads.txt nor sellers.json')
         if self.adstxt and not self.source:
             result.append('no source for an ads.txt entry')
+        if self.account_id and not self.destination:
+            result.append('account id but no seller domain')
         if self.adstxt and not self.destination:
             result.append('missing domain name for ad system')
         if self.source and not validators.domain(self.source):
@@ -143,11 +145,14 @@ class Relationship(object):
             all_sources = True
         if not destination:
             all_destinations = True
+            account_id = None # account id is meaningless without seller
         if account_id is None:
             all_account_ids = True
         else:
             account_id = str(account_id)
         result = []
+        if rid is None and source is None and destination is None and account_id is None:
+            return result
         if cursor is None:
             cursor = cls.eyeball.conn.cursor()
         try:
