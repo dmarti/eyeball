@@ -61,7 +61,8 @@ class EyeballTestCase(unittest.TestCase):
 
     def test_extract_domain(self):
         from relationship import extract_domain
-        for item in ('https://example.com/warez/', 'Example Dot Com (example.com)', 'example.com/'):
+        for item in ('https://example.com/warez/', 'Example Dot Com (example.com)',
+                     'joe@example.com', 'example.com/'):
             self.assertEqual('example.com', extract_domain(item))
 
 if __name__ == '__main__':

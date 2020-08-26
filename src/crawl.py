@@ -40,6 +40,7 @@ class Crawler(object):
             return True
 
         try:
+            touch_file(filename)
             res = urlopen(req, timeout=10)
             encodings = (res.headers.get_content_charset(), 'utf-8', 'latin_1')
             stuff = res.read()
