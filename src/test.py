@@ -39,19 +39,19 @@ class EyeballTestCase(unittest.TestCase):
 
     def test_relationship(self):
         tg = Eyeball()
-        tr = tg.relationship(source = "example.com",
+        tr = tg.relationship(source = "sourceexample.com",
                              destination = "sellerexample.com",
                              account_id = '1337',
                              account_type = 'RESELLER',
                              certification_authority_id = 'abc123'
                             )
         tr.persist()
-        tr2 = tg.relationship.lookup_one(source="example.com")
+        tr2 = tg.relationship.lookup_one(source="sourceexample.com")
         self.assertEqual(tr, tr2)
         tr3 = tg.relationship.lookup_one(account_id='1337')
         self.assertEqual(tr, tr3)
         self.assertIn('sellerexample.com', list(tg.relationship.all_sellers()))
-        self.assertIn('example.com', list(tg.relationship.all_sources()))
+        self.assertIn('sourceexample.com', list(tg.relationship.all_sources()))
 
     def test_parse_adstxt(self):
         tg = Eyeball()

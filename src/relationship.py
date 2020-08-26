@@ -7,7 +7,7 @@ import validators
 def extract_domain(text):
     if validators.domain(text):
         return text
-    for chunk in re.split(' |/|:|\(|\)', text):
+    for chunk in re.split('[^A-Za-z0-9-\.]', text):
         if validators.domain(chunk):
             return chunk
     return text
@@ -145,7 +145,6 @@ class Relationship(object):
             all_sources = True
         if not destination:
             all_destinations = True
-            account_id = None # account id is meaningless without seller
         if account_id is None:
             all_account_ids = True
         else:
