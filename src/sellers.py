@@ -79,6 +79,7 @@ class Sellers(object):
 
     @classmethod
     def parse_file(cls, url):
+        seen = {} 
         domain = urlparse(url).netloc
         if ':' in domain:
             domain = domain.split(':')[0]
@@ -117,6 +118,7 @@ class Sellers(object):
                         rel.comment = data.get('comment')
                         if rel.is_valid:
                             rel.persist(cursor=curs)
+                            seen[pub_domain] = 1
                         else:
                             logging.info('-------------------------------------------------------------------------------')
                             logging.info("Malformed seller entry in %s" % url)
@@ -133,6 +135,7 @@ class Sellers(object):
                 logging.info("Failed to parse %s" % url)
                 logging.error(e)
             curs.connection.commit()
+            cls.eyeball.adstxt.parse_list(seen.keys())
 
     @classmethod
     def lookup_all(cls, sid=None, domain=None):
@@ -171,6 +174,16 @@ class Sellers(object):
                 cls.parse_file('https://%s/sellers.json' % domain)
             except FileNotFoundError:
                 logging.warning("No sellers file cached for %s" % domain)
+
+    @classmethod
+    def parse_list(cls, todo):
+        for domain in todo:
+            if cls.lookup_all(domain=domain):
+                continue
+            try:
+                cls.parse_file('https://%s/sellers.json' % domain)
+            except:
+                pass
 
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

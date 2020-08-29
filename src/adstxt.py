@@ -3,6 +3,8 @@
 import logging
 from urllib.parse import urlparse
 
+import validators
+
 from utils import path_to_url, snarf_file
 
 class AdsTxt(object):
@@ -66,9 +68,13 @@ class AdsTxt(object):
 
     @classmethod
     def parse_file(cls, url):
+        seen = {}
         domain = urlparse(url).netloc
         if ':' in domain:
             domain = domain.split(':')[0]
+        if not validators.domain(domain):
+            logging.info("Skipping % - not a domain." % domain)
+            return False
         fulltext = snarf_file(url, 'ads')
         entry = cls(domain, fulltext)
         in_headers = True
@@ -111,6 +117,7 @@ class AdsTxt(object):
                     rel.certification_authority_id = certification_authority_id
                     if rel.is_valid:
                         rel.persist(cursor=curs)
+                        seen[rel.destination]=1
                     else:
                         logging.info('-------------------------------------------------------------------------------')
                         logging.info("Error on line %d of %s" % (lineno, url))
@@ -122,6 +129,7 @@ class AdsTxt(object):
                     logging.error("Failed to parse %s: %s" % (url, e))
                     raise
             curs.connection.commit()
+            cls.eyeball.sellers.parse_list(seen.keys())
 
     @classmethod
     def lookup_all(cls, aid=None, domain=None):
@@ -161,6 +169,16 @@ class AdsTxt(object):
                 if count == max:
                     return
             except FileNotFoundError:
+                pass
+
+    @classmethod
+    def parse_list(cls, todo):
+        for domain in todo:
+            if cls.lookup_all(domain=domain):
+                continue
+            try:
+                cls.parse_file('https://%s/ads.txt' % domain)
+            except:
                 pass
 
 
