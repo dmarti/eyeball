@@ -48,7 +48,7 @@ class EyeballTestCase(unittest.TestCase):
         tr.persist()
         tr2 = tg.relationship.lookup_one(source="sourceexample.com")
         self.assertEqual(tr, tr2)
-        tr3 = tg.relationship.lookup_one(account_id='1337')
+        tr3 = tg.relationship.lookup_one(destination="sellerexample.com", account_id='1337')
         self.assertEqual(tr, tr3)
         self.assertIn('sellerexample.com', list(tg.relationship.all_sellers()))
         self.assertIn('sourceexample.com', list(tg.relationship.all_sources()))
