@@ -12,13 +12,14 @@ from eyeball import Eyeball
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
-@app.route('/favicon.ico')
+@app.route('/site.css')
 def favicon():
-    return app.send_static_file('favicon.ico')
+    return app.send_static_file('site.css')
 
 @app.route('/')
 def home():
-    return "hello world"
+    strongset = eyeball.relationship.strong_set()
+    return render_template('table.html', strongset=strongset) 
 
 
 # startup stuff
@@ -33,7 +34,6 @@ if 'development' == app.config.get('ENV'):
 app.logger.info("App %s started. Env is %s" % (__name__, app.config.get('ENV')))
 app.logger.debug("Logging at DEBUG level.")
 
-# Market class gets created here.
 eyeball = Eyeball(applog=app.logger, start_demo_db=start_demo_db)
 app.logger.debug("Eyeball started.")
 
@@ -48,6 +48,4 @@ if 'development' == app.config.get('ENV'):
 #                                                                            #
 ##############################################################################
 ''')
-
-
 

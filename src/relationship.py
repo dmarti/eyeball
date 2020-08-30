@@ -206,5 +206,27 @@ class Relationship(object):
                 if validators.domain(row[0]):
                     yield(row[0])
 
+    @classmethod
+    def strong_set(cls):
+        (last_source, last_destination) = (None, None)
+        with cls.eyeball.conn.cursor() as curs:
+            curs.execute('''SELECT DISTINCT source, destination, account_id, adstxt, sellersjson,
+                            is_confidential, seller_type, account_type, certification_authority_id,
+                            is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
+                            source IS NOT NULL AND destination IS NOT NULL AND
+                            sellersjson IS NOT NULL and adstxt IS NOT NULL
+                            ORDER BY source, destination, account_id
+                            ''')
+            for row in curs.fetchall():
+                tmp = cls(*row)
+                if not tmp.is_valid:
+                    continue
+                if not tmp.source or not tmp.destination:
+                    continue
+                if tmp.source == last_source or tmp.destination == last_destination:
+                    continue
+                (last_source, last_destination) = (tmp.source, tmp.destination)
+                yield tmp
+
 
 # vim: autoindent textwidth=100 tabstop=4 shiftwidth=4 expandtab softtabstop=4 filetype=python

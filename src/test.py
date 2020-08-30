@@ -53,6 +53,17 @@ class EyeballTestCase(unittest.TestCase):
         self.assertIn('sellerexample.com', list(tg.relationship.all_sellers()))
         self.assertIn('sourceexample.com', list(tg.relationship.all_sources()))
 
+    def test_strong_set(self):
+        tg = Eyeball()
+        tr = tg.relationship(source = "abc123.example.com",
+                             destination = "xyz123.example.com",
+                             account_id = '1337',
+                             adstxt = 1,
+                             sellersjson= 2
+                            )
+        tr.persist()
+        self.assertIn(tr, list(tg.relationship.strong_set()))
+
     def test_parse_adstxt(self):
         tg = Eyeball()
         tg.adstxt.parse_file('https://blog.zgp.org/ads.txt')
