@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-    <title>Unconstrained Layout</title>
+    <title>eyeball</title>
 <style>
 @import url(/static/site.css);
 
@@ -23,7 +23,6 @@
 	<script src="/graph.js"></script>
 	<script src="/static/d3v4.js"></script>
     <script src="/static/cola.js"></script>
-    <h1>Packing of Disconnected Components</h1>
 <script>
     var width = window.innerWidth - 40,
         height = window.innerHeight - 60;
@@ -31,7 +30,7 @@
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
     var cola = cola.d3adaptor(d3)
-        .linkDistance(100)
+        .linkDistance(50)
         .handleDisconnected(true)
         .size([width, height]);
 
@@ -50,7 +49,7 @@
         .avoidOverlaps(true)
         .convergenceThreshold(1e-9)
         .handleDisconnected(true)
-        .start(1, 0, 10); // need to obtain an initial layout for the node packing to work with by specifying 30 iterations here
+        .start(30, 0, 10); // need to obtain an initial layout for the node packing to work with by specifying 30 iterations here
 
     var link = svg.selectAll(".link")
         .data(graph.links)

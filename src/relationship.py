@@ -208,8 +208,30 @@ class Relationship(object):
 
     @classmethod
     def strong_set(cls):
+        graph = list(cls.two_way_links())
+        return graph
+
+    @classmethod
+    def two_way_links(cls):
+        connected = {}
         (last_source, last_destination) = (None, None)
         with cls.eyeball.conn.cursor() as curs:
+            curs.execute('''SELECT DISTINCT source, destination, account_id, adstxt, sellersjson,
+                            is_confidential, seller_type, account_type, certification_authority_id,
+                            is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
+                            source = 'nytimes.com' AND destination IS NOT NULL 
+                            ORDER BY source, destination, account_id
+                            ''')
+            for row in curs.fetchall():
+                tmp = cls(*row)
+                if not tmp.is_valid:
+                    continue
+                if not tmp.source or not tmp.destination:
+                    continue
+                connected[tmp.source] = 1
+                connected[tmp.destination] = 1
+                yield tmp
+
             curs.execute('''SELECT DISTINCT source, destination, account_id, adstxt, sellersjson,
                             is_confidential, seller_type, account_type, certification_authority_id,
                             is_passthrough, name, comment, created, modified, id FROM relationship WHERE 
@@ -225,6 +247,10 @@ class Relationship(object):
                     continue
                 if tmp.source == last_source or tmp.destination == last_destination:
                     continue
+                if not connected.get(tmp.source) and not connected.get(tmp.destination):
+                    continue
+                connected[tmp.source] = 1
+                connected[tmp.destination] = 1
                 (last_source, last_destination) = (tmp.source, tmp.destination)
                 yield tmp
 
