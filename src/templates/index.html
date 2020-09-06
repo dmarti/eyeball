@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+
+	{% if wizard.spells %}<p>Thy spells:
+		{% for spell in wizard.spells %}
+			{{ spell.html|safe }}
+		{% endfor %}
+	</p>{% else %}
+		<p>Thou hast no spells as yet.  With the California Privacy Wizard browser
+		extension at hand, thou must face the perils of privacy opt-outs to
+		acquire new spells. Wilt thou join the
+		adventure?</p>
+	{% endif %}
+
+	<p id="install-extension">Please install the
+	California Privacy Wizard browser extension.</p>
+
+{% endblock %}
+

@@ -19,7 +19,25 @@ def favicon():
 @app.route('/')
 def home():
     strongset = eyeball.relationship.strong_set()
-    return render_template('table.html', strongset=strongset) 
+    return render_template('graph.html', strongset=strongset) 
+
+@app.route('/graph.js')
+def graph():
+    strongset = eyeball.relationship.strong_set()
+    node_counter = 0
+    (nodelist, edgelist) = ([], [])
+    node_number = {}
+    for item in strongset:
+        if not node_number.get(item.source):
+            node_counter += 1
+            nodelist.append({'id': node_counter, 'label': item.source, 'value': 4, 'group': 1})
+            node_number[item.source] = node_counter
+        if not node_number.get(item.destination):
+            node_counter += 1
+            nodelist.append({'id': node_counter, 'label': item.destination, 'value': 4, 'group': 2})
+            node_number[item.destination] = node_counter
+        edgelist.append({'from': node_number[item.source], 'to': node_number[item.destination]})
+    return 'var nodes = ' + json.dumps(nodelist) + '\n\nvar edges = ' + json.dumps(edgelist)
 
 
 # startup stuff
