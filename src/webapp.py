@@ -19,7 +19,7 @@ def favicon():
 @app.route('/')
 def home():
     strongset = eyeball.relationship.strong_set()
-    return render_template('graph.html', strongset=strongset) 
+    return render_template('graph.html')
 
 @app.route('/graph.js')
 def graph():
@@ -27,18 +27,22 @@ def graph():
     node_counter = 0
     (nodelist, edgelist) = ([], [])
     node_number = {}
+    count = 0
     for item in strongset:
+        count +=1
+        if count > 40000:
+            break
         if not node_number.get(item.source):
-            node_counter += 1
-            nodelist.append({'id': node_counter, 'label': item.source, 'value': 4, 'group': 1})
+            nodelist.append({'name': item.source})
             node_number[item.source] = node_counter
-        if not node_number.get(item.destination):
             node_counter += 1
-            nodelist.append({'id': node_counter, 'label': item.destination, 'value': 4, 'group': 2})
+        if not node_number.get(item.destination):
+            nodelist.append({'name': item.destination})
             node_number[item.destination] = node_counter
-        edgelist.append({'from': node_number[item.source], 'to': node_number[item.destination]})
-    return 'var nodes = ' + json.dumps(nodelist) + '\n\nvar edges = ' + json.dumps(edgelist)
-
+            node_counter += 1
+        edgelist.append({'source': node_number[item.source], 'target': node_number[item.destination]})
+        graph = {'nodes': nodelist, 'links': edgelist}
+    return 'window.graph = %s' % graph
 
 # startup stuff
 app.logger.setLevel(logging.DEBUG)
