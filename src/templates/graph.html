@@ -20,7 +20,7 @@
 </head>
 
 <body>
-	<script src="/graph.js"></script>
+ 	<script src="/graph.js"></script>
 	<script src="/static/d3v4.js"></script>
     <script src="/static/cola.js"></script>
 <script>
@@ -30,15 +30,13 @@
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
     var cola = cola.d3adaptor(d3)
-        .linkDistance(50)
+        .linkDistance(40)
         .handleDisconnected(true)
         .size([width, height]);
 
     var svg = d3.select("body").append("svg")
         .attr("width", width)
         .attr("height", height);
-
-    graph = window.graph;
 
     // packing respects node width and height
     graph.nodes.forEach(function (v) { v.width = 9, v.height = 9 })
@@ -49,7 +47,7 @@
         .avoidOverlaps(true)
         .convergenceThreshold(1e-9)
         .handleDisconnected(true)
-        .start(30, 0, 10); // need to obtain an initial layout for the node packing to work with by specifying 30 iterations here
+        .start(30, 0, 10); // need to obtain an initial layout for the node packing to work with 
 
     var link = svg.selectAll(".link")
         .data(graph.links)

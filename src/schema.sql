@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS adstxt (
 DROP TRIGGER IF EXISTS update_adstxt_modified ON adstxt;
 CREATE TRIGGER update_adstxt_modified BEFORE UPDATE ON adstxt FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
--- sellers.json files
+-- sellers.json files https://iabtechlab.com/wp-content/uploads/2019/07/Sellers.json_Final.pdf
 CREATE TABLE IF NOT EXISTS sellersjson (
 	id SERIAL PRIMARY KEY,
 	domain TEXT NOT NULL,

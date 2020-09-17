@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+
+	<table><tr><th>Domain</th><th>Seller</th><th>account id</th><th>ads.txt</th><th>sellers.json</th></tr>
+
+	{% for r in rellist %}
+	<tr>
+		<td><a href="/domain/{{r.source}}">{{r.source}}</a></td>
+		<td><a href="/domain/{{r.destination}}">{{r.destination}}</a></td>
+		<td>{{r.account_id }}</td>
+		<td>{% if r.adstxt %}<a href="/adstxt/{{r.source}}">{{r.source}}</a>{% endif %}</td>
+		<td>{% if r.sellersjson %}<a href="/sellersjson/{{r.destination}}">{{r.destination}}</a>{% endif %}</td>
+	</tr>
+	{% endfor %}</table>
+
+{% endblock %}
+

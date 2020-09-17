@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+
+<p>{{ filename }} file for <a href="/domain/{{
+meta.domain}}">{{ meta.domain }}</a>
+(with HTTP headers) from <a
+target="_blank" href="http://{{ meta.domain }}/{{ filename }}">{{meta.domain}}/{{ filename }} &#x1f517;</a>
+
+<pre>{{filecontent}}</pre>
+
+<hr>
+
+<div>Modified {{ meta.modified }}</div>
+
+<hr>
+
+{% endblock %}
+

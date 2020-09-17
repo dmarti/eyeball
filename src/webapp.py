@@ -22,27 +22,40 @@ def home():
     return render_template('graph.html')
 
 @app.route('/graph.js')
-def graph():
-    strongset = eyeball.relationship.strong_set()
-    node_counter = 0
-    (nodelist, edgelist) = ([], [])
-    node_number = {}
-    count = 0
-    for item in strongset:
-        count +=1
-        if count > 40000:
-            break
-        if not node_number.get(item.source):
-            nodelist.append({'name': item.source})
-            node_number[item.source] = node_counter
-            node_counter += 1
-        if not node_number.get(item.destination):
-            nodelist.append({'name': item.destination})
-            node_number[item.destination] = node_counter
-            node_counter += 1
-        edgelist.append({'source': node_number[item.source], 'target': node_number[item.destination]})
-        graph = {'nodes': nodelist, 'links': edgelist}
-    return 'window.graph = %s' % graph
+def graph_js():
+    return 'window.graph = %s' % eyeball.relationship.strong_set()
+
+@app.route('/graph.json')
+def graph_json():
+    return 'window.graph = %s' % eyeball.relationship.strong_set()
+
+@app.route('/domain/<domain>')
+def domain_page(domain):
+    rellist = eyeball.relationship.lookup_all(destination=domain) + eyeball.relationship.lookup_all(source=domain)
+    return render_template('domain.html',
+                            title=domain, rellist=rellist)
+
+@app.route('/adstxt/<domain>')
+def adstxt_page(domain):
+    adstxt = eyeball.adstxt.lookup_one(domain = domain)
+    if not adstxt:
+        abort(404)
+    return render_template('file.html',
+                           title='ads.txt file for %s' % domain,
+                           filename='ads.txt',
+                           filecontent = adstxt.fulltext,
+                           meta=adstxt)
+
+@app.route('/sellersjson/<domain>')
+def sellers_page(domain):
+    sellers = eyeball.sellers.lookup_one(domain = domain)
+    if not sellers:
+        abort(404)
+    return render_template('file.html',
+                           title='sellers.json file for %s' % domain,
+                           filename='sellers.json',
+                           filecontent = sellers.fulltext,
+                           meta=sellers)
 
 # startup stuff
 app.logger.setLevel(logging.DEBUG)

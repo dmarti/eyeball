@@ -6,10 +6,10 @@ import validators
 
 def extract_domain(text):
     if validators.domain(text):
-        return text
+        return text.lower()
     for chunk in re.split('[^A-Za-z0-9-\.]', text):
         if validators.domain(chunk):
-            return chunk
+            return chunk.lower()
     return text
 
 class Relationship(object):
@@ -44,6 +44,10 @@ class Relationship(object):
 
     def __repr__(self):
         return "relationship %s %s" % (self.source, self.destination)
+
+    @property
+    def html(self):
+        return '<a href="/domain/%s">%s</a> &rarr; <a href="/domain/%s">%s</a>' % (self.source, self.source, self.destination, self.destination)
 
     def __eq__(self, other):
         if (not self) or (not other):
@@ -163,6 +167,7 @@ class Relationship(object):
                                 (source = %s OR %s) AND
                                 (destination = %s OR %s) AND
                                 (account_id = %s OR %s)
+                                ORDER BY source, destination, account_id
                                 ''', (rid, all_rids, source, all_sources,
                                       destination, all_destinations,
                                       account_id, all_account_ids))
@@ -208,8 +213,20 @@ class Relationship(object):
 
     @classmethod
     def strong_set(cls):
-        graph = list(cls.two_way_links())
-        return graph
+        node_counter = 0
+        (nodelist, edgelist) = ([], [])
+        node_number = {}
+        for item in cls.two_way_links():
+            if not node_number.get(item.source):
+                nodelist.append({'name': item.source})
+                node_number[item.source] = node_counter
+                node_counter += 1
+            if not node_number.get(item.destination):
+                nodelist.append({'name': item.destination})
+                node_number[item.destination] = node_counter
+                node_counter += 1
+            edgelist.append({'source': node_number[item.source], 'target': node_number[item.destination]})
+        return {'nodes': nodelist, 'links': edgelist}
 
     @classmethod
     def two_way_links(cls):
