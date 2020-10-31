@@ -75,4 +75,20 @@ CREATE TABLE IF NOT EXISTS relationship (
 DROP TRIGGER IF EXISTS update_relationship_modified ON relationship;
 CREATE TRIGGER update_relationship_modified BEFORE UPDATE ON relationship FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
+-- crawl and parse queue
+-- https://layerci.com/blog/postgres-is-the-answer/
+
+DO $$ BEGIN
+	CREATE TYPE crawl_job_status AS ENUM ('new', 'fetching', 'fetched', 'parsing');
+EXCEPTION
+        WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE crawl_jobs(
+	url TEXT PRIMARY KEY,
+	status crawl_job_status, 
+	modified TIMESTAMP NOT NULL DEFAULT NOW()
+);
+DROP TRIGGER IF EXISTS update_crawl_jobs_modified ON crawl_jobs;
+CREATE TRIGGER update_crawl_jobs_modified BEFORE UPDATE ON crawl_jobs FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
